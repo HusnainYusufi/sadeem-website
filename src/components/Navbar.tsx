@@ -1,13 +1,17 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
+import logoDark from "@/assets/sunday-logo-black.svg";
+import logoLight from "@/assets/sunday-logo-white.svg";
 
 const navLinks = [
-  { name: "Studio", href: "#studio" },
-  { name: "Gallery", href: "#gallery" },
-  { name: "Packages", href: "#packages" },
-  { name: "Services", href: "#services" },
-  { name: "Contact", href: "#contact" },
+  { name: "Studio", href: "/#studio" },
+  { name: "Gallery", href: "/#gallery" },
+  { name: "Packages", href: "/#packages" },
+  { name: "Services", href: "/#services" },
+  { name: "Availability", href: "/#availability" },
+  { name: "Contact", href: "/#contact" },
+  { name: "Gallery Page", href: "/gallery" },
 ];
 
 const Navbar = () => {
@@ -35,9 +39,16 @@ const Navbar = () => {
     >
       <div className="container px-6">
         <div className="flex items-center justify-between h-20">
-          <a href="#" className="flex-shrink-0">
-            <span className="font-display text-2xl text-foreground">Sunday</span>
-            <span className="font-body text-xs tracking-[0.2em] uppercase text-foreground/70 ml-2">Studio</span>
+          <a href="/" className="flex-shrink-0">
+            <picture>
+              <source srcSet={isScrolled ? logoDark : logoLight} media="(min-width: 768px)" />
+              <img
+                src={isScrolled ? logoDark : logoLight}
+                alt="Sunday Studio logo"
+                className="h-10 w-auto drop-shadow-sm"
+                loading="lazy"
+              />
+            </picture>
           </a>
 
           {/* Desktop Navigation */}

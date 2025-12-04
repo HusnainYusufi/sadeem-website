@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 200" role="img" aria-labelledby="title desc">
+  <title id="title">Sunday Studio Black Logo</title>
+  <desc id="desc">Wordmark logo for Sunday Studio in charcoal black.</desc>
+  <style>
+    .wordmark { font-family: 'Playfair Display', 'Times New Roman', serif; font-weight: 700; letter-spacing: -0.5px; }
+    .sub { font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif; font-weight: 600; letter-spacing: 10px; }
+  </style>
+  <text x="0" y="130" class="wordmark" font-size="128" fill="#0b0b0b">Sunday</text>
+  <text x="6" y="175" class="sub" font-size="28" fill="#0b0b0b">STUDIO</text>
+</svg>
