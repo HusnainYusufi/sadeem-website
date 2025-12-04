@@ -38,7 +38,7 @@ const Navbar = () => {
     >
       <div className="container px-6">
         <div className="flex items-center justify-between h-20">
-          <a href="/" className="flex-shrink-0">
+          <a href="#" className="flex-shrink-0">
             <picture>
               <source srcSet={isScrolled ? logoDark : logoLight} media="(min-width: 768px)" />
               <img
