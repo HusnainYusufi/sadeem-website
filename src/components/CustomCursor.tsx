@@ -8,7 +8,6 @@ const interactiveSelectors = [
   "select",
   "[role='button']",
   "[data-cursor='interactive']",
-  "section",
 ];
 
 const CustomCursor = () => {
@@ -61,6 +60,16 @@ const CustomCursor = () => {
     const handleLeaveWindow = () => setVisible(false);
     const handleDown = () => setPressed(true);
     const handleUp = () => setPressed(false);
+    const handleCancel = () => {
+      setPressed(false);
+      setVisible(false);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        handleCancel();
+      }
+    };
 
     window.addEventListener("mousemove", handleMove, { passive: true });
     window.addEventListener("mouseleave", handleLeaveWindow);
