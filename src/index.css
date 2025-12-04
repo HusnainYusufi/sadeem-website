@@ -159,6 +159,14 @@
     box-shadow: var(--shadow-elevated);
   }
 
+  .shadow-soft-glow {
+    box-shadow: 0 14px 40px -16px rgba(0, 0, 0, 0.7), 0 0 28px rgba(74, 222, 128, 0.2);
+  }
+
+  .shadow-strong-glow {
+    box-shadow: 0 18px 50px -18px rgba(0, 0, 0, 0.75), 0 0 40px rgba(74, 222, 128, 0.35);
+  }
+
   /* 3D Transform utilities */
   .perspective-1000 {
     perspective: 1000px;
@@ -218,12 +226,12 @@
 
 /* Custom cursor styling */
 @media (pointer: fine) {
-  body,
-  a,
-  button,
-  input,
-  textarea,
-  select {
+  .custom-cursor-enabled body,
+  .custom-cursor-enabled a,
+  .custom-cursor-enabled button,
+  .custom-cursor-enabled input,
+  .custom-cursor-enabled textarea,
+  .custom-cursor-enabled select {
     cursor: none;
   }
 }
@@ -249,6 +257,10 @@
   mix-blend-mode: multiply;
   pointer-events: none;
   z-index: 10000;
+}
+
+.custom-cursor-layer {
+  pointer-events: none;
 }
 
 .custom-cursor::after {
