@@ -11,7 +11,7 @@ const interactiveSelectors = [
 ];
 
 const CustomCursor = () => {
-  const [enabled, setEnabled] = useState(false);
+  const [enabled, setEnabled] = useState(true);
   const [visible, setVisible] = useState(false);
   const [active, setActive] = useState(false);
   const [pressed, setPressed] = useState(false);
@@ -20,7 +20,7 @@ const CustomCursor = () => {
   const coordsRef = useRef({ x: -100, y: -100 });
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(pointer: fine) and (hover: hover)");
+    const mediaQuery = window.matchMedia("(pointer: fine)");
     const updateSupport = (event: MediaQueryListEvent | MediaQueryList) => {
       setEnabled(event.matches);
     };
@@ -32,15 +32,9 @@ const CustomCursor = () => {
   }, []);
 
   useEffect(() => {
-    document.documentElement.classList.toggle("custom-cursor-enabled", enabled);
-  }, [enabled]);
-
-  useEffect(() => {
     if (!enabled) return;
 
     const interactiveSelector = interactiveSelectors.join(",");
-
-    const isFinePointer = (event: PointerEvent) => event.pointerType === "mouse" || event.pointerType === "pen";
 
     const updateCursorPosition = () => {
       if (!cursorRef.current) return;
@@ -50,9 +44,7 @@ const CustomCursor = () => {
       rafIdRef.current = null;
     };
 
-    const handleMove = (event: PointerEvent) => {
-      if (!isFinePointer(event)) return;
-
+    const handleMove = (event: MouseEvent) => {
       coordsRef.current = { x: event.clientX, y: event.clientY };
 
       if (rafIdRef.current === null) {
@@ -65,27 +57,12 @@ const CustomCursor = () => {
       setActive(Boolean(target?.closest(interactiveSelector)));
     };
 
-    const handleLeaveWindow = () => {
-      setVisible(false);
-      setActive(false);
-      setPressed(false);
-    };
-
-    const handleDown = (event: PointerEvent) => {
-      if (!isFinePointer(event)) return;
-      setPressed(true);
-      setVisible(true);
-    };
-
-    const handleUp = (event: PointerEvent) => {
-      if (!isFinePointer(event)) return;
-      setPressed(false);
-    };
-    const handleCancel = (event?: Event) => {
-      if (event instanceof PointerEvent && !isFinePointer(event)) return;
+    const handleLeaveWindow = () => setVisible(false);
+    const handleDown = () => setPressed(true);
+    const handleUp = () => setPressed(false);
+    const handleCancel = () => {
       setPressed(false);
       setVisible(false);
-      setActive(false);
     };
 
     const handleVisibilityChange = () => {
@@ -94,26 +71,20 @@ const CustomCursor = () => {
       }
     };
 
-    window.addEventListener("pointermove", handleMove, { passive: true });
-    window.addEventListener("pointerleave", handleLeaveWindow);
-    window.addEventListener("pointerdown", handleDown);
-    window.addEventListener("pointerup", handleUp);
-    window.addEventListener("pointercancel", handleCancel);
-    window.addEventListener("blur", handleCancel);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("mousemove", handleMove, { passive: true });
+    window.addEventListener("mouseleave", handleLeaveWindow);
+    window.addEventListener("mousedown", handleDown);
+    window.addEventListener("mouseup", handleUp);
 
     return () => {
       if (rafIdRef.current !== null) {
         cancelAnimationFrame(rafIdRef.current);
       }
 
-      window.removeEventListener("pointermove", handleMove);
-      window.removeEventListener("pointerleave", handleLeaveWindow);
-      window.removeEventListener("pointerdown", handleDown);
-      window.removeEventListener("pointerup", handleUp);
-      window.removeEventListener("pointercancel", handleCancel);
-      window.removeEventListener("blur", handleCancel);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseleave", handleLeaveWindow);
+      window.removeEventListener("mousedown", handleDown);
+      window.removeEventListener("mouseup", handleUp);
     };
   }, [enabled]);
 

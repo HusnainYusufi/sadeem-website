@@ -266,7 +266,7 @@
   pointer-events: none;
 }
 
-.custom-cursor::before {
+.custom-cursor::after {
   content: "";
   position: absolute;
   inset: -3px;
