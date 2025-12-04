@@ -11,7 +11,7 @@ const interactiveSelectors = [
 ];
 
 const CustomCursor = () => {
-  const [enabled, setEnabled] = useState(false);
+  const [enabled, setEnabled] = useState(true);
   const [visible, setVisible] = useState(false);
   const [active, setActive] = useState(false);
   const [pressed, setPressed] = useState(false);
@@ -32,10 +32,6 @@ const CustomCursor = () => {
   }, []);
 
   useEffect(() => {
-    document.documentElement.classList.toggle("custom-cursor-enabled", enabled);
-  }, [enabled]);
-
-  useEffect(() => {
     if (!enabled) return;
 
     const interactiveSelector = interactiveSelectors.join(",");
@@ -48,9 +44,7 @@ const CustomCursor = () => {
       rafIdRef.current = null;
     };
 
-    const handleMove = (event: PointerEvent) => {
-      if (event.pointerType !== "mouse" && event.pointerType !== "pen") return;
-
+    const handleMove = (event: MouseEvent) => {
       coordsRef.current = { x: event.clientX, y: event.clientY };
 
       if (rafIdRef.current === null) {
@@ -77,26 +71,20 @@ const CustomCursor = () => {
       }
     };
 
-    window.addEventListener("pointermove", handleMove, { passive: true });
-    window.addEventListener("pointerleave", handleLeaveWindow);
-    window.addEventListener("pointerdown", handleDown);
-    window.addEventListener("pointerup", handleUp);
-    window.addEventListener("pointercancel", handleCancel);
-    window.addEventListener("blur", handleCancel);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("mousemove", handleMove, { passive: true });
+    window.addEventListener("mouseleave", handleLeaveWindow);
+    window.addEventListener("mousedown", handleDown);
+    window.addEventListener("mouseup", handleUp);
 
     return () => {
       if (rafIdRef.current !== null) {
         cancelAnimationFrame(rafIdRef.current);
       }
 
-      window.removeEventListener("pointermove", handleMove);
-      window.removeEventListener("pointerleave", handleLeaveWindow);
-      window.removeEventListener("pointerdown", handleDown);
-      window.removeEventListener("pointerup", handleUp);
-      window.removeEventListener("pointercancel", handleCancel);
-      window.removeEventListener("blur", handleCancel);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseleave", handleLeaveWindow);
+      window.removeEventListener("mousedown", handleDown);
+      window.removeEventListener("mouseup", handleUp);
     };
   }, [enabled]);
 
