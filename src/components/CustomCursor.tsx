@@ -53,10 +53,6 @@ const CustomCursor = () => {
         className={`custom-cursor ${visible ? "opacity-100" : "opacity-0"} ${active ? "cursor-active" : ""} ${pressed ? "cursor-pressed" : ""}`}
         style={{ transform: cursorTransform }}
       />
-      <div
-        className={`custom-cursor-dot ${visible ? "opacity-100" : "opacity-0"} ${active ? "cursor-active" : ""} ${pressed ? "cursor-pressed" : ""}`}
-        style={{ transform: cursorTransform }}
-      />
     </div>
   );
 };
