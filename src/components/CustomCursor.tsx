@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const interactiveSelectors = [
   "a",
@@ -12,16 +12,46 @@ const interactiveSelectors = [
 ];
 
 const CustomCursor = () => {
-  const [coords, setCoords] = useState({ x: -100, y: -100 });
+  const [enabled, setEnabled] = useState(true);
   const [visible, setVisible] = useState(false);
   const [active, setActive] = useState(false);
   const [pressed, setPressed] = useState(false);
+  const cursorRef = useRef<HTMLDivElement>(null);
+  const rafIdRef = useRef<number | null>(null);
+  const coordsRef = useRef({ x: -100, y: -100 });
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia("(pointer: fine)");
+    const updateSupport = (event: MediaQueryListEvent | MediaQueryList) => {
+      setEnabled(event.matches);
+    };
+
+    updateSupport(mediaQuery);
+    mediaQuery.addEventListener("change", updateSupport);
+
+    return () => mediaQuery.removeEventListener("change", updateSupport);
+  }, []);
+
+  useEffect(() => {
+    if (!enabled) return;
+
     const interactiveSelector = interactiveSelectors.join(",");
 
+    const updateCursorPosition = () => {
+      if (!cursorRef.current) return;
+
+      const { x, y } = coordsRef.current;
+      cursorRef.current.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+      rafIdRef.current = null;
+    };
+
     const handleMove = (event: MouseEvent) => {
-      setCoords({ x: event.clientX, y: event.clientY });
+      coordsRef.current = { x: event.clientX, y: event.clientY };
+
+      if (rafIdRef.current === null) {
+        rafIdRef.current = requestAnimationFrame(updateCursorPosition);
+      }
+
       setVisible(true);
 
       const target = event.target as Element | null;
@@ -32,26 +62,30 @@ const CustomCursor = () => {
     const handleDown = () => setPressed(true);
     const handleUp = () => setPressed(false);
 
-    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("mousemove", handleMove, { passive: true });
     window.addEventListener("mouseleave", handleLeaveWindow);
     window.addEventListener("mousedown", handleDown);
     window.addEventListener("mouseup", handleUp);
 
     return () => {
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+      }
+
       window.removeEventListener("mousemove", handleMove);
       window.removeEventListener("mouseleave", handleLeaveWindow);
       window.removeEventListener("mousedown", handleDown);
       window.removeEventListener("mouseup", handleUp);
     };
-  }, []);
+  }, [enabled]);
 
-  const cursorTransform = `translate3d(${coords.x}px, ${coords.y}px, 0) translate(-50%, -50%)`;
+  if (!enabled) return null;
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[10000] hidden md:block">
       <div
+        ref={cursorRef}
         className={`custom-cursor ${visible ? "opacity-100" : "opacity-0"} ${active ? "cursor-active" : ""} ${pressed ? "cursor-pressed" : ""}`}
-        style={{ transform: cursorTransform }}
       />
     </div>
   );
