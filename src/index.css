@@ -251,6 +251,10 @@
   z-index: 10000;
 }
 
+.custom-cursor-layer {
+  pointer-events: none;
+}
+
 .custom-cursor::after {
   content: "";
   position: absolute;

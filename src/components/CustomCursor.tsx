@@ -91,7 +91,11 @@ const CustomCursor = () => {
   if (!enabled) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-[10000] hidden md:block">
+    <div
+      className="custom-cursor-layer pointer-events-none fixed inset-0 z-[10000] hidden md:block"
+      aria-hidden="true"
+      inert
+    >
       <div
         ref={cursorRef}
         className={`custom-cursor ${visible ? "opacity-100" : "opacity-0"} ${active ? "cursor-active" : ""} ${pressed ? "cursor-pressed" : ""}`}
