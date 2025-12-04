@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, MessageCircle } from "lucide-react";
 
 const Hero = () => {
   return (
@@ -56,6 +56,15 @@ const Hero = () => {
             className="inline-flex items-center justify-center px-8 py-4 border border-primary text-primary font-body font-medium text-sm tracking-wider uppercase transition-all hover:bg-primary hover:text-primary-foreground"
           >
             Explore Studio
+          </a>
+          <a
+            href="https://wa.me/923000846656"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary text-primary-foreground font-body font-medium text-sm tracking-wider uppercase transition-all hover:scale-105 hover:shadow-elevated"
+          >
+            <MessageCircle className="w-5 h-5" />
+            WhatsApp Us
           </a>
         </motion.div>
       </div>
