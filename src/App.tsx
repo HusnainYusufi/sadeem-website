@@ -7,6 +7,7 @@ import { HelmetProvider } from "react-helmet-async";
 import CustomCursor from "./components/CustomCursor";
 import WhatsAppButton from "./components/WhatsAppButton";
 import Index from "./pages/Index";
+import GalleryPage from "./pages/GalleryPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
           <WhatsAppButton />
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/gallery" element={<GalleryPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

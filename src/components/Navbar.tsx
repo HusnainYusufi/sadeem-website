@@ -5,11 +5,12 @@ import logoDark from "@/assets/sunday-logo-black.svg";
 import logoLight from "@/assets/sunday-logo-white.svg";
 
 const navLinks = [
-  { name: "Studio", href: "#studio" },
-  { name: "Gallery", href: "#gallery" },
-  { name: "Packages", href: "#packages" },
-  { name: "Services", href: "#services" },
-  { name: "Contact", href: "#contact" },
+  { name: "Studio", href: "/#studio" },
+  { name: "Gallery", href: "/#gallery" },
+  { name: "Packages", href: "/#packages" },
+  { name: "Services", href: "/#services" },
+  { name: "Contact", href: "/#contact" },
+  { name: "Gallery Page", href: "/gallery" },
 ];
 
 const Navbar = () => {
