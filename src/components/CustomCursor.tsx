@@ -18,41 +18,30 @@ const CustomCursor = () => {
   const [pressed, setPressed] = useState(false);
 
   useEffect(() => {
+    const interactiveSelector = interactiveSelectors.join(",");
+
     const handleMove = (event: MouseEvent) => {
       setCoords({ x: event.clientX, y: event.clientY });
       setVisible(true);
+
+      const target = event.target as Element | null;
+      setActive(Boolean(target?.closest(interactiveSelector)));
     };
 
     const handleLeaveWindow = () => setVisible(false);
     const handleDown = () => setPressed(true);
     const handleUp = () => setPressed(false);
-    const handleEnter = () => setActive(true);
-    const handleExit = () => setActive(false);
 
     window.addEventListener("mousemove", handleMove);
     window.addEventListener("mouseleave", handleLeaveWindow);
     window.addEventListener("mousedown", handleDown);
     window.addEventListener("mouseup", handleUp);
 
-    const interactiveElements = Array.from(
-      document.querySelectorAll<HTMLElement>(interactiveSelectors.join(",")),
-    );
-
-    interactiveElements.forEach((element) => {
-      element.addEventListener("mouseenter", handleEnter);
-      element.addEventListener("mouseleave", handleExit);
-    });
-
     return () => {
       window.removeEventListener("mousemove", handleMove);
       window.removeEventListener("mouseleave", handleLeaveWindow);
       window.removeEventListener("mousedown", handleDown);
       window.removeEventListener("mouseup", handleUp);
-
-      interactiveElements.forEach((element) => {
-        element.removeEventListener("mouseenter", handleEnter);
-        element.removeEventListener("mouseleave", handleExit);
-      });
     };
   }, []);
 
