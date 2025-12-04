@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const interactiveSelectors = [
   "a",
@@ -8,20 +8,55 @@ const interactiveSelectors = [
   "select",
   "[role='button']",
   "[data-cursor='interactive']",
-  "section",
 ];
 
 const CustomCursor = () => {
-  const [coords, setCoords] = useState({ x: -100, y: -100 });
+  const [enabled, setEnabled] = useState(false);
   const [visible, setVisible] = useState(false);
   const [active, setActive] = useState(false);
   const [pressed, setPressed] = useState(false);
+  const cursorRef = useRef<HTMLDivElement>(null);
+  const rafIdRef = useRef<number | null>(null);
+  const coordsRef = useRef({ x: -100, y: -100 });
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia("(pointer: fine)");
+    const updateSupport = (event: MediaQueryListEvent | MediaQueryList) => {
+      setEnabled(event.matches);
+    };
+
+    updateSupport(mediaQuery);
+    mediaQuery.addEventListener("change", updateSupport);
+
+    return () => mediaQuery.removeEventListener("change", updateSupport);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("custom-cursor-enabled", enabled);
+  }, [enabled]);
+
+  useEffect(() => {
+    if (!enabled) return;
+
     const interactiveSelector = interactiveSelectors.join(",");
 
-    const handleMove = (event: MouseEvent) => {
-      setCoords({ x: event.clientX, y: event.clientY });
+    const updateCursorPosition = () => {
+      if (!cursorRef.current) return;
+
+      const { x, y } = coordsRef.current;
+      cursorRef.current.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+      rafIdRef.current = null;
+    };
+
+    const handleMove = (event: PointerEvent) => {
+      if (event.pointerType !== "mouse" && event.pointerType !== "pen") return;
+
+      coordsRef.current = { x: event.clientX, y: event.clientY };
+
+      if (rafIdRef.current === null) {
+        rafIdRef.current = requestAnimationFrame(updateCursorPosition);
+      }
+
       setVisible(true);
 
       const target = event.target as Element | null;
@@ -31,27 +66,51 @@ const CustomCursor = () => {
     const handleLeaveWindow = () => setVisible(false);
     const handleDown = () => setPressed(true);
     const handleUp = () => setPressed(false);
+    const handleCancel = () => {
+      setPressed(false);
+      setVisible(false);
+    };
 
-    window.addEventListener("mousemove", handleMove);
-    window.addEventListener("mouseleave", handleLeaveWindow);
-    window.addEventListener("mousedown", handleDown);
-    window.addEventListener("mouseup", handleUp);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        handleCancel();
+      }
+    };
+
+    window.addEventListener("pointermove", handleMove, { passive: true });
+    window.addEventListener("pointerleave", handleLeaveWindow);
+    window.addEventListener("pointerdown", handleDown);
+    window.addEventListener("pointerup", handleUp);
+    window.addEventListener("pointercancel", handleCancel);
+    window.addEventListener("blur", handleCancel);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
-      window.removeEventListener("mousemove", handleMove);
-      window.removeEventListener("mouseleave", handleLeaveWindow);
-      window.removeEventListener("mousedown", handleDown);
-      window.removeEventListener("mouseup", handleUp);
-    };
-  }, []);
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+      }
 
-  const cursorTransform = `translate3d(${coords.x}px, ${coords.y}px, 0) translate(-50%, -50%)`;
+      window.removeEventListener("pointermove", handleMove);
+      window.removeEventListener("pointerleave", handleLeaveWindow);
+      window.removeEventListener("pointerdown", handleDown);
+      window.removeEventListener("pointerup", handleUp);
+      window.removeEventListener("pointercancel", handleCancel);
+      window.removeEventListener("blur", handleCancel);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [enabled]);
+
+  if (!enabled) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-[10000] hidden md:block">
+    <div
+      className="custom-cursor-layer pointer-events-none fixed inset-0 z-[10000] hidden md:block"
+      aria-hidden="true"
+      inert
+    >
       <div
+        ref={cursorRef}
         className={`custom-cursor ${visible ? "opacity-100" : "opacity-0"} ${active ? "cursor-active" : ""} ${pressed ? "cursor-pressed" : ""}`}
-        style={{ transform: cursorTransform }}
       />
     </div>
   );
