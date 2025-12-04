@@ -218,12 +218,12 @@
 
 /* Custom cursor styling */
 @media (pointer: fine) {
-  body,
-  a,
-  button,
-  input,
-  textarea,
-  select {
+  .custom-cursor-enabled body,
+  .custom-cursor-enabled a,
+  .custom-cursor-enabled button,
+  .custom-cursor-enabled input,
+  .custom-cursor-enabled textarea,
+  .custom-cursor-enabled select {
     cursor: none;
   }
 }
@@ -249,6 +249,10 @@
   mix-blend-mode: multiply;
   pointer-events: none;
   z-index: 10000;
+}
+
+.custom-cursor-layer {
+  pointer-events: none;
 }
 
 .custom-cursor::after {
