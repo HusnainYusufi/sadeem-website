@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Minus, Plus, X, ZoomIn } from "lucide-react";
 import studioMain from "@/assets/studio-main.jpg";
 import studioDiagram from "@/assets/studio-diagram.png";
+import logoDark from "@/assets/sunday-logo-black.svg";
 
 const galleryImages = [
   { src: studioMain, alt: "Sunday Studio Main Space", category: "Studio" },
@@ -200,6 +201,19 @@ const Gallery = () => {
               className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/90 p-4"
               onClick={closeLightbox}
             >
+              <div className="absolute top-4 left-6 flex items-center gap-3 pointer-events-none">
+                <div className="rounded-full bg-background/90 shadow-soft px-4 py-2">
+                  <img
+                    src={logoDark}
+                    alt="Sunday Studio black logo"
+                    className="h-8 w-auto"
+                    loading="lazy"
+                  />
+                </div>
+                <span className="text-xs uppercase tracking-[0.2em] text-background/80">
+                  Gallery Carousel
+                </span>
+              </div>
               <motion.button
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
