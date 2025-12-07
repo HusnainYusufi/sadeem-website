@@ -8,6 +8,7 @@ import CustomCursor from "./components/CustomCursor";
 import WhatsAppButton from "./components/WhatsAppButton";
 import Index from "./pages/Index";
 import GalleryPage from "./pages/GalleryPage";
+import OtherServices from "./pages/OtherServices";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +24,7 @@ const App = () => (
           <WhatsAppButton />
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/services" element={<OtherServices />} />
             <Route path="/gallery" element={<GalleryPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
