@@ -1,9 +1,28 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { Check, Star, ArrowRight } from "lucide-react";
+import { useMemo, useState, type ChangeEvent } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowRight, Check, Send, Star, X } from "lucide-react";
 import { packages } from "@/data/packages";
 
-const FlipCard = ({ pkg, index }: { pkg: typeof packages[0]; index: number }) => {
+type InquiryData = {
+  name: string;
+  email: string;
+  phone: string;
+  details: string;
+  imageLinks: string;
+  otherServices: string[];
+};
+
+const availableServices = ["Art Direction", "Lighting", "Generator"];
+
+const FlipCard = ({
+  pkg,
+  index,
+  onBook,
+}: {
+  pkg: typeof packages[0];
+  index: number;
+  onBook: (packageName: string) => void;
+}) => {
   const [isFlipped, setIsFlipped] = useState(false);
 
   return (
@@ -107,7 +126,7 @@ const FlipCard = ({ pkg, index }: { pkg: typeof packages[0]; index: number }) =>
             className="w-full inline-flex items-center justify-center py-3 font-body text-sm uppercase tracking-wider transition-all bg-primary-foreground text-primary hover:opacity-90 rounded-lg"
           >
             Book Now
-          </button>
+          </a>
         </div>
       </motion.div>
     </motion.div>
