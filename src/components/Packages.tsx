@@ -1,29 +1,9 @@
-import type { ChangeEvent } from "react";
-import { useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Check, Star, ArrowRight, X, Send } from "lucide-react";
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Check, Star, ArrowRight } from "lucide-react";
 import { packages } from "@/data/packages";
 
-const availableServices = ["Art Direction", "Lighting", "Generator"];
-
-type InquiryData = {
-  name: string;
-  email: string;
-  phone: string;
-  details: string;
-  imageLinks: string;
-  otherServices: string[];
-};
-
-const FlipCard = ({
-  pkg,
-  index,
-  onBook,
-}: {
-  pkg: typeof packages[0];
-  index: number;
-  onBook: (name: string) => void;
-}) => {
+const FlipCard = ({ pkg, index }: { pkg: typeof packages[0]; index: number }) => {
   const [isFlipped, setIsFlipped] = useState(false);
 
   return (
@@ -122,9 +102,8 @@ const FlipCard = ({
             </ul>
           </div>
 
-          <button
-            type="button"
-            onClick={() => onBook(pkg.name)}
+          <a
+            href={`/?package=${encodeURIComponent(pkg.name)}#contact`}
             className="w-full inline-flex items-center justify-center py-3 font-body text-sm uppercase tracking-wider transition-all bg-primary-foreground text-primary hover:opacity-90 rounded-lg"
           >
             Book Now
