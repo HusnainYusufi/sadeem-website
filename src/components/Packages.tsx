@@ -1,74 +1,29 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { Check, Star, ArrowRight } from "lucide-react";
+import type { ChangeEvent } from "react";
+import { useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Check, Star, ArrowRight, X, Send } from "lucide-react";
+import { packages } from "@/data/packages";
 
-const packages = [
-  {
-    name: "Package 01",
-    price: "50,000",
-    duration: "4 Hours",
-    description: "Best for brand content",
-    features: [
-      "Freshly Painted Infinity Wall",
-      "Makeup Room",
-      "Changing Room",
-      "Kitchen",
-      "Iron Room",
-      "Sitting Lounge",
-    ],
-    backDetails: [
-      "Perfect for quick photo sessions",
-      "Ideal for product photography",
-      "Social media content creation",
-      "Small team shoots",
-    ],
-    popular: false,
-  },
-  {
-    name: "Package 02",
-    price: "70,000",
-    duration: "8 Hours",
-    description: "Best for e-commerce & brand content & Fashion",
-    features: [
-      "Freshly Painted Infinity Wall",
-      "Makeup Room",
-      "Changing Room",
-      "Kitchen",
-      "Iron Room",
-      "Sitting Lounge",
-    ],
-    backDetails: [
-      "Full day production capability",
-      "Multiple outfit changes",
-      "E-commerce catalog shoots",
-      "Fashion lookbook sessions",
-    ],
-    popular: true,
-  },
-  {
-    name: "Package 03",
-    price: "90,000",
-    duration: "12 Hours",
-    description: "For fashion, commercials & high-end shoots",
-    features: [
-      "Freshly Painted Infinity Wall",
-      "Makeup Room",
-      "Iron Room",
-      "Sitting Lounge - 2 Heaters",
-      "Dedicated Studio Assistant",
-      "Complimentary Tea",
-    ],
-    backDetails: [
-      "Extended production hours",
-      "Premium studio assistant",
-      "Commercial-grade shoots",
-      "High-end fashion productions",
-    ],
-    popular: false,
-  },
-];
+const availableServices = ["Art Direction", "Lighting", "Generator"];
 
-const FlipCard = ({ pkg, index }: { pkg: typeof packages[0]; index: number }) => {
+type InquiryData = {
+  name: string;
+  email: string;
+  phone: string;
+  details: string;
+  imageLinks: string;
+  otherServices: string[];
+};
+
+const FlipCard = ({
+  pkg,
+  index,
+  onBook,
+}: {
+  pkg: typeof packages[0];
+  index: number;
+  onBook: (name: string) => void;
+}) => {
   const [isFlipped, setIsFlipped] = useState(false);
 
   return (
@@ -120,9 +75,19 @@ const FlipCard = ({ pkg, index }: { pkg: typeof packages[0]; index: number }) =>
             ))}
           </ul>
 
-          <div className="text-center text-muted-foreground text-xs flex items-center justify-center gap-2">
-            <span>Hover for more</span>
-            <ArrowRight className="w-3 h-3" />
+          <div className="mt-6 flex flex-col items-center gap-3">
+            <button
+              type="button"
+              onClick={() => onBook(pkg.name)}
+              className="w-full inline-flex items-center justify-center rounded-lg bg-primary px-4 py-3 font-body text-sm font-medium uppercase tracking-wider text-primary-foreground transition hover:opacity-90"
+            >
+              Book Now
+            </button>
+
+            <div className="text-center text-muted-foreground text-xs flex items-center justify-center gap-2">
+              <span>Hover for more</span>
+              <ArrowRight className="w-3 h-3" />
+            </div>
           </div>
         </div>
 
@@ -157,12 +122,13 @@ const FlipCard = ({ pkg, index }: { pkg: typeof packages[0]; index: number }) =>
             </ul>
           </div>
 
-          <a
-            href="#contact"
+          <button
+            type="button"
+            onClick={() => onBook(pkg.name)}
             className="w-full inline-flex items-center justify-center py-3 font-body text-sm uppercase tracking-wider transition-all bg-primary-foreground text-primary hover:opacity-90 rounded-lg"
           >
             Book Now
-          </a>
+          </button>
         </div>
       </motion.div>
     </motion.div>
@@ -170,6 +136,68 @@ const FlipCard = ({ pkg, index }: { pkg: typeof packages[0]; index: number }) =>
 };
 
 const Packages = () => {
+  const [activePackage, setActivePackage] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [inquiryData, setInquiryData] = useState<InquiryData>({
+    name: "",
+    email: "",
+    phone: "",
+    details: "",
+    imageLinks: "",
+    otherServices: [],
+  });
+
+  const whatsappMessage = useMemo(
+    () =>
+      `Hi Sunday Studio, I'd like to book ${activePackage ?? "a package"}.\n\nName: ${
+        inquiryData.name || "-"
+      }\nEmail: ${inquiryData.email || "-"}\nPhone/WhatsApp: ${
+        inquiryData.phone || "-"
+      }\nOther Services: ${
+        inquiryData.otherServices.length > 0
+          ? inquiryData.otherServices.join(", ")
+          : "-"
+      }\nProject Details: ${inquiryData.details || "-"}\nReference Images: ${
+        inquiryData.imageLinks || "-"
+      }`,
+    [activePackage, inquiryData],
+  );
+
+  const handleToggleService = (service: string) => {
+    setInquiryData((prev) => {
+      const hasService = prev.otherServices.includes(service);
+      return {
+        ...prev,
+        otherServices: hasService
+          ? prev.otherServices.filter((item) => item !== service)
+          : [...prev.otherServices, service],
+      };
+    });
+  };
+
+  const handleInputChange = (
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = event.target;
+    setInquiryData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const openModal = (packageName: string) => {
+    setActivePackage(packageName);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setActivePackage(null);
+  };
+
+  const handleSendInquiry = () => {
+    const whatsappUrl = `https://wa.me/923000846656?text=${encodeURIComponent(whatsappMessage)}`;
+    window.open(whatsappUrl, "_blank");
+    setIsModalOpen(false);
+  };
+
   return (
     <section id="packages" className="py-24 lg:py-32 bg-cream-dark">
       <div className="container px-6">
@@ -193,7 +221,7 @@ const Packages = () => {
 
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {packages.map((pkg, index) => (
-            <FlipCard key={pkg.name} pkg={pkg} index={index} />
+            <FlipCard key={pkg.name} pkg={pkg} index={index} onBook={openModal} />
           ))}
         </div>
 
@@ -211,6 +239,141 @@ const Packages = () => {
           </div>
         </motion.div>
       </div>
+
+      <AnimatePresence>
+        {isModalOpen && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-3xl rounded-2xl bg-background p-6 shadow-elevated"
+            >
+              <button
+                type="button"
+                onClick={closeModal}
+                className="absolute right-4 top-4 rounded-full bg-muted p-2 text-muted-foreground hover:text-foreground"
+                aria-label="Close inquiry modal"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              <div className="mb-6 space-y-2 pr-10">
+                <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">Book your package</p>
+                <h3 className="font-display text-2xl text-foreground">
+                  Send an inquiry for {activePackage}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Share your details and any reference images (links). We’ll reply with availability and next steps.
+                </p>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="space-y-2 text-sm font-medium text-muted-foreground">
+                  Name
+                  <input
+                    type="text"
+                    name="name"
+                    value={inquiryData.name}
+                    onChange={handleInputChange}
+                    placeholder="Your full name"
+                    className="w-full rounded-lg border border-muted bg-white px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </label>
+
+                <label className="space-y-2 text-sm font-medium text-muted-foreground">
+                  Email
+                  <input
+                    type="email"
+                    name="email"
+                    value={inquiryData.email}
+                    onChange={handleInputChange}
+                    placeholder="name@email.com"
+                    className="w-full rounded-lg border border-muted bg-white px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </label>
+
+                <label className="space-y-2 text-sm font-medium text-muted-foreground">
+                  Phone / WhatsApp
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={inquiryData.phone}
+                    onChange={handleInputChange}
+                    placeholder="Include country code"
+                    className="w-full rounded-lg border border-muted bg-white px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </label>
+
+                <label className="space-y-2 text-sm font-medium text-muted-foreground">
+                  Reference images or drive links
+                  <input
+                    type="text"
+                    name="imageLinks"
+                    value={inquiryData.imageLinks}
+                    onChange={handleInputChange}
+                    placeholder="Paste URLs (Google Drive, Dropbox, etc.)"
+                    className="w-full rounded-lg border border-muted bg-white px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </label>
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                {availableServices.map((service) => {
+                  const checked = inquiryData.otherServices.includes(service);
+                  return (
+                    <label
+                      key={service}
+                      className={`flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-sm transition ${
+                        checked ? "border-primary bg-primary/5 text-foreground" : "border-muted bg-white text-foreground/80"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => handleToggleService(service)}
+                        className="h-4 w-4 rounded border-muted text-primary focus:ring-primary"
+                      />
+                      {service}
+                    </label>
+                  );
+                })}
+              </div>
+
+              <label className="mt-4 block space-y-2 text-sm font-medium text-muted-foreground">
+                Additional details
+                <textarea
+                  name="details"
+                  value={inquiryData.details}
+                  onChange={handleInputChange}
+                  rows={4}
+                  placeholder="Tell us about your shoot, timing, crew size, or any specific needs."
+                  className="w-full rounded-lg border border-muted bg-white px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </label>
+
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <button
+                  type="button"
+                  onClick={handleSendInquiry}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 font-body text-sm font-medium uppercase tracking-wider text-primary-foreground transition hover:scale-105"
+                >
+                  <Send className="h-4 w-4" />
+                  Send via WhatsApp
+                </button>
+                <p className="text-xs text-muted-foreground">
+                  We’ll respond with availability and confirm add-on services.
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 };
