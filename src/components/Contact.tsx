@@ -1,21 +1,37 @@
 import type { ChangeEvent, FormEvent } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Phone, MapPin, Clock, MessageCircle, Send } from "lucide-react";
+import { packages } from "@/data/packages";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
+    selectedPackage: "",
     projectType: "Studio Session",
     date: "",
     details: "",
+    otherServices: [] as string[],
   });
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const packageParam = searchParams.get("package");
+
+    if (packageParam) {
+      setFormData((prev) => ({ ...prev, selectedPackage: packageParam }));
+    }
+  }, []);
+
+  const availableServices = ["Art Direction", "Lighting", "Generator"];
 
   const whatsappMessage = useMemo(
     () =>
-      `Hi Sunday Studio, I'd like a quote for a shoot.\n\nName: ${formData.name || "-"}\nEmail: ${formData.email || "-"}\nPhone/WhatsApp: ${formData.phone || "-"}\nProject Type: ${formData.projectType || "-"}\nPreferred Date: ${formData.date || "-"}\nProject Details: ${formData.details || "-"}`,
+      `Hi Sunday Studio, I'd like a quote for a shoot.\n\nName: ${formData.name || "-"}\nEmail: ${formData.email || "-"}\nPhone/WhatsApp: ${formData.phone || "-"}\nPackage: ${formData.selectedPackage || "-"}\nOther Services: ${
+        formData.otherServices.length > 0 ? formData.otherServices.join(", ") : "-"
+      }\nProject Type: ${formData.projectType || "-"}\nPreferred Date: ${formData.date || "-"}\nProject Details: ${formData.details || "-"}`,
     [formData],
   );
 
@@ -24,6 +40,18 @@ const Contact = () => {
   ) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleServiceToggle = (service: string) => {
+    setFormData((prev) => {
+      const hasService = prev.otherServices.includes(service);
+      return {
+        ...prev,
+        otherServices: hasService
+          ? prev.otherServices.filter((item) => item !== service)
+          : [...prev.otherServices, service],
+      };
+    });
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -197,9 +225,9 @@ const Contact = () => {
                   value={formData.phone}
                   onChange={handleChange}
                   required
-                  className="w-full rounded-lg border border-muted bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="Include country code"
-                />
+                className="w-full rounded-lg border border-muted bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="Include country code"
+              />
               </label>
 
               <label className="space-y-2 text-sm font-medium text-muted-foreground">
@@ -209,9 +237,47 @@ const Contact = () => {
                   name="date"
                   value={formData.date}
                   onChange={handleChange}
-                  className="w-full rounded-lg border border-muted bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary"
-                />
+                className="w-full rounded-lg border border-muted bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary"
+              />
               </label>
+            </div>
+
+            <label className="space-y-2 text-sm font-medium text-muted-foreground block mt-4">
+              Package Interest
+              <select
+                name="selectedPackage"
+                value={formData.selectedPackage}
+                onChange={handleChange}
+                className="w-full rounded-lg border border-muted bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="">Select a package</option>
+                {packages.map((pkg) => (
+                  <option key={pkg.name} value={pkg.name}>
+                    {pkg.name} ({pkg.duration})
+                  </option>
+                ))}
+                <option value="Not sure yet">Not sure yet</option>
+              </select>
+            </label>
+
+            <div className="mt-4 space-y-3">
+              <p className="text-sm font-medium text-muted-foreground">Additional Services</p>
+              <div className="grid sm:grid-cols-3 gap-3">
+                {availableServices.map((service) => (
+                  <label
+                    key={service}
+                    className="flex items-center gap-3 rounded-lg border border-muted bg-background px-4 py-3 text-sm text-foreground/80"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formData.otherServices.includes(service)}
+                      onChange={() => handleServiceToggle(service)}
+                      className="h-4 w-4 rounded border-muted text-primary focus:ring-primary"
+                    />
+                    {service}
+                  </label>
+                ))}
+              </div>
             </div>
 
             <label className="space-y-2 text-sm font-medium text-muted-foreground block mt-4">

@@ -1,5 +1,15 @@
 import { motion } from "framer-motion";
-import { Lightbulb, Zap, Wrench, Camera } from "lucide-react";
+import { Lightbulb, Zap, Wrench, Camera, Palette } from "lucide-react";
+
+const artDirection = {
+  title: "Art Direction",
+  description: "Concept, styling, and on-set guidance to keep your visuals cohesive.",
+  highlights: [
+    "Moodboard & visual language",
+    "Props, styling & set dressing",
+    "On-site supervision throughout the shoot",
+  ],
+};
 
 const equipment = [
   { name: "Storm LS 1200d Pro", icon: Lightbulb },
@@ -35,15 +45,50 @@ const Services = () => {
             Other Services
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Professional lighting, grip & accessories available for rent
+            Art direction support, professional lighting, generators, grip & accessories available for rent
           </p>
         </motion.div>
 
-        <div className="grid lg:grid-cols-2 gap-12 max-w-5xl mx-auto">
-          {/* Lighting Equipment */}
+        <div className="grid lg:grid-cols-3 gap-12 max-w-6xl mx-auto">
+          {/* Art Direction */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.8 }}
+            className="bg-card rounded-xl p-8 shadow-medium"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-accent rounded-lg flex items-center justify-center">
+                <Palette className="w-6 h-6 text-foreground" />
+              </div>
+              <h3 className="font-display text-2xl text-foreground">Art Direction</h3>
+            </div>
+            <p className="text-muted-foreground text-sm mb-4">{artDirection.description}</p>
+            <ul className="space-y-3">
+              {artDirection.highlights.map((item, index) => (
+                <motion.li
+                  key={item}
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: index * 0.05 }}
+                  className="flex items-start gap-3 text-sm text-foreground/80"
+                >
+                  <div className="w-2 h-2 rounded-full bg-primary mt-2" />
+                  {item}
+                </motion.li>
+              ))}
+            </ul>
+            <div className="mt-6 p-4 bg-accent/30 rounded-lg text-sm text-muted-foreground">
+              Concept, styling & set dressing available as an add-on to any package.
+            </div>
+          </motion.div>
+
+          {/* Lighting Equipment */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, x: 0, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8 }}
             className="bg-card rounded-xl p-8 shadow-medium"
@@ -76,8 +121,8 @@ const Services = () => {
 
           {/* Generators */}
           <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, x: 0, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8, delay: 0.2 }}
             className="bg-card rounded-xl p-8 shadow-medium"
