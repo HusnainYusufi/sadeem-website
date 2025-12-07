@@ -55,9 +55,19 @@ const FlipCard = ({ pkg, index }: { pkg: typeof packages[0]; index: number }) =>
             ))}
           </ul>
 
-          <div className="text-center text-muted-foreground text-xs flex items-center justify-center gap-2">
-            <span>Hover for more</span>
-            <ArrowRight className="w-3 h-3" />
+          <div className="mt-6 flex flex-col items-center gap-3">
+            <button
+              type="button"
+              onClick={() => onBook(pkg.name)}
+              className="w-full inline-flex items-center justify-center rounded-lg bg-primary px-4 py-3 font-body text-sm font-medium uppercase tracking-wider text-primary-foreground transition hover:opacity-90"
+            >
+              Book Now
+            </button>
+
+            <div className="text-center text-muted-foreground text-xs flex items-center justify-center gap-2">
+              <span>Hover for more</span>
+              <ArrowRight className="w-3 h-3" />
+            </div>
           </div>
         </div>
 
