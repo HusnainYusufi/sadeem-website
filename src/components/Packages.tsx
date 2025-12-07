@@ -1,72 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Check, Star, ArrowRight } from "lucide-react";
-
-const packages = [
-  {
-    name: "Package 01",
-    price: "50,000",
-    duration: "4 Hours",
-    description: "Best for brand content",
-    features: [
-      "Freshly Painted Infinity Wall",
-      "Makeup Room",
-      "Changing Room",
-      "Kitchen",
-      "Iron Room",
-      "Sitting Lounge",
-    ],
-    backDetails: [
-      "Perfect for quick photo sessions",
-      "Ideal for product photography",
-      "Social media content creation",
-      "Small team shoots",
-    ],
-    popular: false,
-  },
-  {
-    name: "Package 02",
-    price: "70,000",
-    duration: "8 Hours",
-    description: "Best for e-commerce & brand content & Fashion",
-    features: [
-      "Freshly Painted Infinity Wall",
-      "Makeup Room",
-      "Changing Room",
-      "Kitchen",
-      "Iron Room",
-      "Sitting Lounge",
-    ],
-    backDetails: [
-      "Full day production capability",
-      "Multiple outfit changes",
-      "E-commerce catalog shoots",
-      "Fashion lookbook sessions",
-    ],
-    popular: true,
-  },
-  {
-    name: "Package 03",
-    price: "90,000",
-    duration: "12 Hours",
-    description: "For fashion, commercials & high-end shoots",
-    features: [
-      "Freshly Painted Infinity Wall",
-      "Makeup Room",
-      "Iron Room",
-      "Sitting Lounge - 2 Heaters",
-      "Dedicated Studio Assistant",
-      "Complimentary Tea",
-    ],
-    backDetails: [
-      "Extended production hours",
-      "Premium studio assistant",
-      "Commercial-grade shoots",
-      "High-end fashion productions",
-    ],
-    popular: false,
-  },
-];
+import { packages } from "@/data/packages";
 
 const FlipCard = ({ pkg, index }: { pkg: typeof packages[0]; index: number }) => {
   const [isFlipped, setIsFlipped] = useState(false);
@@ -158,7 +93,7 @@ const FlipCard = ({ pkg, index }: { pkg: typeof packages[0]; index: number }) =>
           </div>
 
           <a
-            href="#contact"
+            href={`/?package=${encodeURIComponent(pkg.name)}#contact`}
             className="w-full inline-flex items-center justify-center py-3 font-body text-sm uppercase tracking-wider transition-all bg-primary-foreground text-primary hover:opacity-90 rounded-lg"
           >
             Book Now
