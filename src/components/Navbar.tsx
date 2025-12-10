@@ -12,7 +12,6 @@ const navLinks = [
   { name: "Other Services", href: "/services" },
   { name: "Contact", href: "/#contact" },
   { name: "Gallery Page", href: "/gallery" },
-  { name: "Client Portal", href: "/portal" },
 ];
 
 const Navbar = () => {

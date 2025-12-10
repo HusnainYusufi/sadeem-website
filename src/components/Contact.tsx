@@ -1,8 +1,10 @@
 import type { ChangeEvent, FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Phone, MapPin, Clock, MessageCircle, Send } from "lucide-react";
 import { packages } from "@/data/packages";
+import { submitQueryToSupabase } from "@/lib/supabase";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -15,6 +17,9 @@ const Contact = () => {
     details: "",
     otherServices: [] as string[],
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionMessage, setSubmissionMessage] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -54,10 +59,44 @@ const Contact = () => {
     });
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const whatsappUrl = `https://wa.me/923000846656?text=${encodeURIComponent(whatsappMessage)}`;
-    window.open(whatsappUrl, "_blank");
+    setIsSubmitting(true);
+    setSubmissionMessage(null);
+
+    try {
+      await submitQueryToSupabase({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        selected_package: formData.selectedPackage || undefined,
+        project_type: formData.projectType || undefined,
+        preferred_date: formData.date || undefined,
+        details: formData.details || undefined,
+        other_services: formData.otherServices,
+      });
+
+      await queryClient.invalidateQueries({ queryKey: ["queries"] });
+
+      const whatsappUrl = `https://wa.me/923000846656?text=${encodeURIComponent(whatsappMessage)}`;
+      window.open(whatsappUrl, "_blank");
+
+      setSubmissionMessage("Submitted! Our team will review and reach out shortly.");
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        selectedPackage: "",
+        projectType: "Studio Session",
+        date: "",
+        details: "",
+        otherServices: [],
+      });
+    } catch (error) {
+      setSubmissionMessage((error as Error).message || "We could not submit your query. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleQuickWhatsApp = () => {
@@ -312,14 +351,15 @@ const Contact = () => {
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <button
                 type="submit"
-                className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-full bg-primary text-primary-foreground font-body font-medium uppercase tracking-wider hover:scale-105 transition-transform"
+                disabled={isSubmitting}
+                className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-full bg-primary text-primary-foreground font-body font-medium uppercase tracking-wider hover:scale-105 transition-transform disabled:opacity-60"
               >
                 <Send className="w-4 h-4" />
-                Send via WhatsApp
+                {isSubmitting ? "Sending..." : "Send via WhatsApp"}
               </button>
 
               <p className="text-xs text-muted-foreground text-left">
-                We will reply with a tailored quote and available slots.
+                {submissionMessage || "We will reply with a tailored quote and available slots."}
               </p>
             </div>
           </motion.form>
