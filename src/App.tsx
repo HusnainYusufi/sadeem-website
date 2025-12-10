@@ -9,6 +9,7 @@ import WhatsAppButton from "./components/WhatsAppButton";
 import Index from "./pages/Index";
 import GalleryPage from "./pages/GalleryPage";
 import OtherServices from "./pages/OtherServices";
+import Portal from "./pages/Portal";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/services" element={<OtherServices />} />
             <Route path="/gallery" element={<GalleryPage />} />
+            <Route path="/portal" element={<Portal />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
