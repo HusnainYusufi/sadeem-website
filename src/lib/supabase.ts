@@ -8,6 +8,19 @@ export type AvailabilitySlot = {
   note?: string | null;
 };
 
+export type ContactQuery = {
+  id?: string | number;
+  created_at?: string;
+  name: string;
+  email: string;
+  phone: string;
+  selected_package?: string;
+  project_type?: string;
+  preferred_date?: string;
+  details?: string;
+  other_services?: string[];
+};
+
 const SUPABASE_URL = "https://hlkvuxnznpqoqndaprku.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhsa3Z1eG56bnBxb3FuZGFwcmt1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzODEzMTksImV4cCI6MjA4MDk1NzMxOX0.7BVI1VSKvNRVm6wHP-SefM4bltw9emXLE6U4lm9I3sI";
 
@@ -36,6 +49,7 @@ export type SupabaseSession = {
 };
 
 const SESSION_STORAGE_KEY = "sunday-studio-session";
+const QUERIES_STORAGE_KEY = "sunday-studio-queries";
 
 export const readStoredSession = (): SupabaseSession | null => {
   try {
@@ -53,6 +67,20 @@ export const writeSession = (session: SupabaseSession | null) => {
     return;
   }
   localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+};
+
+const readLocalQueries = (): ContactQuery[] => {
+  try {
+    const raw = localStorage.getItem(QUERIES_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as ContactQuery[]) : [];
+  } catch (error) {
+    console.error("Unable to read stored queries", error);
+    return [];
+  }
+};
+
+const writeLocalQueries = (queries: ContactQuery[]) => {
+  localStorage.setItem(QUERIES_STORAGE_KEY, JSON.stringify(queries));
 };
 
 export const signInWithSupabase = async (email: string, password: string): Promise<SupabaseSession> => {
@@ -144,4 +172,74 @@ export const upsertAvailabilityToSupabase = async (
 
   const data = await handleResponse(response);
   return data as AvailabilitySlot[];
+};
+
+export const submitQueryToSupabase = async (payload: ContactQuery): Promise<ContactQuery> => {
+  const localFallback = () => {
+    const existing = readLocalQueries();
+    const entry: ContactQuery = {
+      ...payload,
+      id: payload.id ?? crypto.randomUUID(),
+      created_at: new Date().toISOString(),
+    };
+    writeLocalQueries([entry, ...existing]);
+    return entry;
+  };
+
+  if (!hasSupabaseConfig) {
+    return localFallback();
+  }
+
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/queries`, {
+      method: "POST",
+      headers: {
+        ...headers(),
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify({
+        name: payload.name,
+        email: payload.email,
+        phone: payload.phone,
+        selected_package: payload.selected_package ?? null,
+        project_type: payload.project_type ?? null,
+        preferred_date: payload.preferred_date ?? null,
+        details: payload.details ?? null,
+        other_services: payload.other_services ?? [],
+      }),
+    });
+
+    const data = await handleResponse(response);
+    const saved = (data as ContactQuery[])[0];
+    return saved ?? localFallback();
+  } catch (error) {
+    console.warn("Falling back to local query storage", error);
+    return localFallback();
+  }
+};
+
+export const fetchQueriesFromSupabase = async (accessToken?: string): Promise<ContactQuery[]> => {
+  if (!hasSupabaseConfig) {
+    return readLocalQueries();
+  }
+
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/queries?select=*&order=created_at.desc`, {
+      headers: headers(accessToken),
+    });
+
+    const data = await handleResponse(response);
+    const results = (data as ContactQuery[]).map((entry) => ({
+      ...entry,
+      other_services: entry.other_services ?? [],
+    }));
+    if (!results.length) {
+      return readLocalQueries();
+    }
+    writeLocalQueries(results);
+    return results;
+  } catch (error) {
+    console.warn("Falling back to local queries", error);
+    return readLocalQueries();
+  }
 };
