@@ -8,8 +8,8 @@ export type AvailabilitySlot = {
   note?: string | null;
 };
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+const SUPABASE_URL = "https://hlkvuxnznpqoqndaprku.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhsa3Z1eG56bnBxb3FuZGFwcmt1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzODEzMTksImV4cCI6MjA4MDk1NzMxOX0.7BVI1VSKvNRVm6wHP-SefM4bltw9emXLE6U4lm9I3sI";
 
 export const hasSupabaseConfig = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
