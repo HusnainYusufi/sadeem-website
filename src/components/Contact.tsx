@@ -75,14 +75,6 @@ const Contact = () => {
       ? toLocalDate(iso).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })
       : "Not selected";
 
-  const whatsappMessage = useMemo(
-    () =>
-      `Hi Sunday Studio, I'd like a quote for a shoot.\n\nName: ${formData.name || "-"}\nEmail: ${formData.email || "-"}\nPhone/WhatsApp: ${formData.phone || "-"}\nPackage: ${formData.selectedPackage || "-"}\nOther Services: ${
-        formData.otherServices.length > 0 ? formData.otherServices.join(", ") : "-"
-      }\nProject Type: ${formData.projectType || "-"}\nPreferred Date: ${formData.date || "-"}\nProject Details: ${formData.details || "-"}`,
-    [formData],
-  );
-
   const handleDateSelect = (iso: string) => {
     setFormData((prev) => ({ ...prev, date: iso }));
     setDatePickerOpen(false);
@@ -125,9 +117,6 @@ const Contact = () => {
       });
 
       await queryClient.invalidateQueries({ queryKey: ["queries"] });
-
-      const whatsappUrl = `https://wa.me/923104828282?text=${encodeURIComponent(whatsappMessage)}`;
-      window.open(whatsappUrl, "_blank");
 
       setSubmissionMessage("Submitted! Our team will review and reach out shortly.");
       setFormData({
@@ -482,7 +471,7 @@ const Contact = () => {
                 className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-full bg-primary text-primary-foreground font-body font-medium uppercase tracking-wider hover:scale-105 transition-transform disabled:opacity-60"
               >
                 <Send className="w-4 h-4" />
-                {isSubmitting ? "Sending..." : "Send via WhatsApp"}
+                {isSubmitting ? "Posting..." : "Post a query"}
               </button>
 
               <p className="text-xs text-muted-foreground text-left">
