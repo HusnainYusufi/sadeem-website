@@ -3,9 +3,10 @@ import {
   AvailabilitySlot,
   AvailabilityStatus,
   fetchAvailabilityFromSupabase,
-  hasSupabaseConfig,
+  readLocalAvailability,
   readStoredSession,
   upsertAvailabilityToSupabase,
+  writeLocalAvailability,
 } from "@/lib/supabase";
 
 const formatISO = (date: Date) => date.toISOString().split("T")[0];
@@ -70,15 +71,27 @@ export const useAvailabilityQuery = () => {
     queryKey: ["availability"],
     queryFn: async () => {
       const seeded = buildSeededCalendar(AVAILABILITY_WINDOW_DAYS);
+      const mergeWithLocal = (source: AvailabilitySlot[]) => {
+        const overrides = readLocalAvailability();
+        if (!overrides.length) return source;
+
+        const map = new Map(source.map((slot) => [slot.date, slot] as const));
+        overrides.forEach((slot) => {
+          const existing = map.get(slot.date) ?? {};
+          map.set(slot.date, { ...existing, ...slot });
+        });
+        return Array.from(map.values()).sort((a, b) => a.date.localeCompare(b.date));
+      };
+
       try {
         const remote = await fetchAvailabilityFromSupabase(AVAILABILITY_WINDOW_DAYS, session?.access_token);
-        if (!remote.length) return seeded;
-
-        const map = new Map(remote.map((slot) => [slot.date, slot] as const));
-        return seeded.map((slot) => map.get(slot.date) ?? slot);
+        const merged = mergeWithLocal(remote.length ? remote : seeded);
+        writeLocalAvailability(merged);
+        return merged;
       } catch (error) {
         console.warn("Falling back to seeded availability", error);
-        return seeded;
+        const merged = mergeWithLocal(seeded);
+        return merged.length ? merged : seeded;
       }
     },
     staleTime: 1000 * 60 * 5,
@@ -91,9 +104,6 @@ export const useAvailabilityMutation = () => {
   return useMutation({
     mutationFn: async (slot: AvailabilitySlot) => {
       const currentSession = readStoredSession();
-      if (!hasSupabaseConfig) {
-        throw new Error("Supabase environment variables are missing.");
-      }
       const payload: AvailabilitySlot = {
         ...slot,
         date: slot.date,

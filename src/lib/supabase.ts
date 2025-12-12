@@ -50,6 +50,7 @@ export type SupabaseSession = {
 
 const SESSION_STORAGE_KEY = "sunday-studio-session";
 const QUERIES_STORAGE_KEY = "sunday-studio-queries";
+const AVAILABILITY_STORAGE_KEY = "sunday-studio-availability";
 
 export const readStoredSession = (): SupabaseSession | null => {
   try {
@@ -81,6 +82,31 @@ const readLocalQueries = (): ContactQuery[] => {
 
 const writeLocalQueries = (queries: ContactQuery[]) => {
   localStorage.setItem(QUERIES_STORAGE_KEY, JSON.stringify(queries));
+};
+
+export const readLocalAvailability = (): AvailabilitySlot[] => {
+  try {
+    const raw = localStorage.getItem(AVAILABILITY_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as AvailabilitySlot[]) : [];
+  } catch (error) {
+    console.error("Unable to read stored availability", error);
+    return [];
+  }
+};
+
+export const writeLocalAvailability = (slots: AvailabilitySlot[]) => {
+  localStorage.setItem(AVAILABILITY_STORAGE_KEY, JSON.stringify(slots));
+};
+
+const mergeAvailabilitySlots = (base: AvailabilitySlot[], overrides: AvailabilitySlot[]) => {
+  const map = new Map(base.map((slot) => [slot.date, slot] as const));
+
+  overrides.forEach((slot) => {
+    const existing = map.get(slot.date) ?? {};
+    map.set(slot.date, { ...existing, ...slot });
+  });
+
+  return Array.from(map.values()).sort((a, b) => a.date.localeCompare(b.date));
 };
 
 export const signInWithSupabase = async (email: string, password: string): Promise<SupabaseSession> => {
@@ -122,7 +148,9 @@ export const fetchAvailabilityFromSupabase = async (
   daysAhead: number,
   accessToken?: string,
 ): Promise<AvailabilitySlot[]> => {
-  if (!hasSupabaseConfig) return [];
+  const localFallback = () => readLocalAvailability();
+
+  if (!hasSupabaseConfig) return localFallback();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const futureDate = new Date(today);
@@ -134,44 +162,70 @@ export const fetchAvailabilityFromSupabase = async (
   query.searchParams.append("date", `gte.${today.toISOString().split("T")[0]}`);
   query.searchParams.append("date", `lte.${futureDate.toISOString().split("T")[0]}`);
 
-  const response = await fetch(query.toString(), {
-    headers: {
-      ...headers(accessToken),
-      Prefer: "count=none",
-    },
-  });
+  try {
+    const response = await fetch(query.toString(), {
+      headers: {
+        ...headers(accessToken),
+        Prefer: "count=none",
+      },
+    });
 
-  const data = await handleResponse(response);
-  return (data as AvailabilitySlot[]).map((slot) => ({
-    ...slot,
-    note: slot.note ?? null,
-  }));
+    const data = await handleResponse(response);
+    const slots = (data as AvailabilitySlot[]).map((slot) => ({
+      ...slot,
+      note: slot.note ?? null,
+    }));
+
+    if (slots.length) {
+      writeLocalAvailability(slots);
+    }
+
+    return slots;
+  } catch (error) {
+    console.warn("Falling back to local availability", error);
+    return localFallback();
+  }
 };
 
 export const upsertAvailabilityToSupabase = async (
   payload: AvailabilitySlot[],
   accessToken?: string,
 ): Promise<AvailabilitySlot[]> => {
+  const saveLocally = () => {
+    const merged = mergeAvailabilitySlots(readLocalAvailability(), payload);
+    writeLocalAvailability(merged);
+    return merged.filter((slot) => payload.some((entry) => entry.date === slot.date));
+  };
+
   if (!hasSupabaseConfig) {
-    throw new Error("Supabase environment variables are missing.");
+    return saveLocally();
   }
 
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/availability_slots?on_conflict=date`, {
-    method: "POST",
-    headers: {
-      ...headers(accessToken),
-      Prefer: "resolution=merge-duplicates",
-    },
-    body: JSON.stringify(
-      payload.map((slot) => ({
-        ...slot,
-        note: slot.note ?? null,
-      })),
-    ),
-  });
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/availability_slots?on_conflict=date`, {
+      method: "POST",
+      headers: {
+        ...headers(accessToken),
+        Prefer: "resolution=merge-duplicates",
+      },
+      body: JSON.stringify(
+        payload.map((slot) => ({
+          ...slot,
+          note: slot.note ?? null,
+        })),
+      ),
+    });
 
-  const data = await handleResponse(response);
-  return data as AvailabilitySlot[];
+    const data = await handleResponse(response);
+    const saved = data as AvailabilitySlot[];
+    if (saved?.length) {
+      writeLocalAvailability(mergeAvailabilitySlots(readLocalAvailability(), saved));
+    }
+    return saved;
+  } catch (error) {
+    console.warn("Unable to persist availability to Supabase, storing locally instead", error);
+    return saveLocally();
+  }
 };
 
 export const submitQueryToSupabase = async (payload: ContactQuery): Promise<ContactQuery> => {

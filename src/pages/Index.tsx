@@ -5,7 +5,6 @@ import StudioSpecs from "@/components/StudioSpecs";
 import Gallery from "@/components/Gallery";
 import Packages from "@/components/Packages";
 import Services from "@/components/Services";
-import Availability from "@/components/Availability";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
 
@@ -28,7 +27,6 @@ const Index = () => {
         <Gallery />
         <Packages />
         <Services />
-        <Availability />
         <Contact />
       </main>
       <Footer />

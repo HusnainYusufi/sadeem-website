@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Phone, MapPin, Clock, MessageCircle, Send } from "lucide-react";
 import { packages } from "@/data/packages";
 import { submitQueryToSupabase } from "@/lib/supabase";
+import { useAvailabilityQuery } from "@/hooks/useAvailability";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -20,6 +21,18 @@ const Contact = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionMessage, setSubmissionMessage] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const { data: availabilitySlots = [] } = useAvailabilityQuery();
+
+  const availabilityMap = useMemo(
+    () => new Map(availabilitySlots.map((slot) => [slot.date, slot])),
+    [availabilitySlots],
+  );
+
+  const today = useMemo(() => {
+    const base = new Date();
+    base.setHours(0, 0, 0, 0);
+    return base;
+  }, []);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -30,7 +43,30 @@ const Contact = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (availabilitySlots.length === 0 || formData.date) return;
+
+    const nextSlot =
+      availabilitySlots.find((slot) => slot.status !== "booked" && new Date(slot.date) >= today) || availabilitySlots[0];
+
+    if (nextSlot) {
+      setFormData((prev) => ({ ...prev, date: nextSlot.date }));
+    }
+  }, [availabilitySlots, formData.date, today]);
+
   const availableServices = ["Art Direction", "Lighting", "Generator"];
+
+  const statusColors: Record<string, string> = {
+    booked: "bg-rose-500 text-white border-rose-600",
+    hold: "bg-amber-400 text-amber-950 border-amber-500",
+    available: "bg-emerald-500 text-white border-emerald-500",
+    past: "bg-muted text-foreground/60 border-border",
+  };
+
+  const formatDisplayDate = (iso?: string) =>
+    iso
+      ? new Date(iso).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })
+      : "Not selected";
 
   const whatsappMessage = useMemo(
     () =>
@@ -39,6 +75,22 @@ const Contact = () => {
       }\nProject Type: ${formData.projectType || "-"}\nPreferred Date: ${formData.date || "-"}\nProject Details: ${formData.details || "-"}`,
     [formData],
   );
+
+  const monthsToDisplay = useMemo(() => {
+    const start = new Date(today);
+    start.setDate(1);
+    return [start, new Date(start.getFullYear(), start.getMonth() + 1, 1)];
+  }, [today]);
+
+  const resolveStatusForDate = (date: Date) => {
+    if (date < today) return "past";
+    const iso = date.toISOString().split("T")[0];
+    return availabilityMap.get(iso)?.status ?? "available";
+  };
+
+  const handleDateSelect = (iso: string) => {
+    setFormData((prev) => ({ ...prev, date: iso }));
+  };
 
   const handleChange = (
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
@@ -269,15 +321,86 @@ const Contact = () => {
               />
               </label>
 
-              <label className="space-y-2 text-sm font-medium text-muted-foreground">
+              <label className="space-y-3 text-sm font-medium text-muted-foreground sm:col-span-2">
                 Preferred Date
-                <input
-                  type="date"
-                  name="date"
-                  value={formData.date}
-                  onChange={handleChange}
-                className="w-full rounded-lg border border-muted bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary"
-              />
+                <div className="rounded-xl border border-muted bg-background/50 p-4 space-y-3">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Tap to pick a date</p>
+                    <span className="text-xs font-medium text-foreground/80">
+                      Selected: <span className="text-foreground">{formatDisplayDate(formData.date)}</span>
+                    </span>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {monthsToDisplay.map((month) => {
+                      const startDay = new Date(month.getFullYear(), month.getMonth(), 1).getDay();
+                      const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+
+                      return (
+                        <div key={`${month.getFullYear()}-${month.getMonth()}`} className="space-y-2">
+                          <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                            <span>{month.toLocaleString("default", { month: "long" })}</span>
+                            <span>{month.getFullYear()}</span>
+                          </div>
+                          <div className="grid grid-cols-7 text-[11px] text-muted-foreground/80 gap-2">
+                            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                              <span key={day} className="text-center">
+                                {day}
+                              </span>
+                            ))}
+                          </div>
+                          <div className="grid grid-cols-7 gap-2">
+                            {Array.from({ length: startDay }).map((_, index) => (
+                              <div key={`empty-${month.toISOString()}-${index}`} />
+                            ))}
+                            {Array.from({ length: daysInMonth }).map((_, index) => {
+                              const day = index + 1;
+                              const date = new Date(month.getFullYear(), month.getMonth(), day);
+                              const iso = date.toISOString().split("T")[0];
+                              const status = resolveStatusForDate(date);
+                              const isSelected = formData.date === iso;
+                              const label =
+                                status === "booked" ? "Booked" : status === "hold" ? "On hold" : status === "past" ? "Past" : "Open";
+
+                              return (
+                                <button
+                                  key={iso}
+                                  type="button"
+                                  onClick={() => handleDateSelect(iso)}
+                                  disabled={status === "past"}
+                                  className={`group flex flex-col items-center gap-1 rounded-lg border border-muted bg-white/70 px-2 py-1 text-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                                    isSelected ? "shadow-soft ring-2 ring-primary" : "hover:-translate-y-0.5"
+                                  } ${status === "past" ? "opacity-60" : ""}`}
+                                >
+                                  <span
+                                    className={`flex h-9 w-9 items-center justify-center rounded-full border text-sm font-semibold ${
+                                      statusColors[status] || statusColors.available
+                                    }`}
+                                  >
+                                    {day}
+                                  </span>
+                                  <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">{label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                    {["available", "hold", "booked"].map((key) => (
+                      <span key={key} className="inline-flex items-center gap-2">
+                        <span className={`h-3 w-3 rounded-full border ${statusColors[key]}`} />
+                        <span className="uppercase tracking-[0.2em]">{key}</span>
+                      </span>
+                    ))}
+                    <span className="text-[11px] text-muted-foreground/80">Live view from the portal — booked dates stay red.</span>
+                  </div>
+
+                  <input type="hidden" name="date" value={formData.date} />
+                </div>
               </label>
             </div>
 
