@@ -32,15 +32,19 @@ const Contact = () => {
     return base;
   }, []);
 
-  const selectedDate = formData.date ? new Date(formData.date) : undefined;
+  const toLocalDate = (value: string) => new Date(`${value}T00:00:00`);
+  const formatLocalISO = (date: Date) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
+  const selectedDate = formData.date ? toLocalDate(formData.date) : undefined;
 
   const bookedDates = useMemo(
-    () => availabilitySlots.filter((slot) => slot.status === "booked").map((slot) => new Date(slot.date)),
+    () => availabilitySlots.filter((slot) => slot.status === "booked").map((slot) => toLocalDate(slot.date)),
     [availabilitySlots],
   );
 
   const holdDates = useMemo(
-    () => availabilitySlots.filter((slot) => slot.status === "hold").map((slot) => new Date(slot.date)),
+    () => availabilitySlots.filter((slot) => slot.status === "hold").map((slot) => toLocalDate(slot.date)),
     [availabilitySlots],
   );
 
@@ -68,7 +72,7 @@ const Contact = () => {
 
   const formatDisplayDate = (iso?: string) =>
     iso
-      ? new Date(iso).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })
+      ? toLocalDate(iso).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })
       : "Not selected";
 
   const whatsappMessage = useMemo(
@@ -339,16 +343,17 @@ const Contact = () => {
                       </button>
                     </Popover.Trigger>
                     <Popover.Content
-                      align="start"
+                      align="center"
                       sideOffset={8}
-                      className="z-50 w-auto rounded-xl border border-muted bg-background p-4 shadow-elevated/30"
+                      collisionPadding={12}
+                      className="z-50 w-[min(360px,calc(100vw-2.5rem))] max-w-full rounded-xl border border-muted bg-background p-4 shadow-elevated/30"
                     >
                       <DayPicker
                         mode="single"
                         selected={selectedDate}
                         onSelect={(date) => {
                           if (!date) return;
-                          handleDateSelect(date.toISOString().split("T")[0]);
+                          handleDateSelect(formatLocalISO(date));
                         }}
                         disabled={[{ before: today }, ...bookedDates]}
                         modifiers={{ booked: bookedDates, hold: holdDates }}
@@ -356,21 +361,22 @@ const Contact = () => {
                           booked: "bg-rose-500 text-white hover:bg-rose-500 focus-visible:ring-rose-500",
                           hold: "bg-amber-200 text-amber-950 hover:bg-amber-200",
                         }}
-                        className="mx-auto"
+                        className="mx-auto w-full"
                         classNames={{
-                          months: "flex flex-col gap-4",
-                          month: "space-y-4",
+                          months: "flex flex-col gap-4 w-full",
+                          month: "space-y-4 w-full",
                           caption: "flex items-center justify-between px-2 text-sm font-semibold",
                           caption_label: "text-sm font-semibold",
                           nav: "flex items-center gap-2",
                           nav_button:
                             "h-8 w-8 inline-flex items-center justify-center rounded-md border border-muted bg-background hover:bg-muted text-muted-foreground transition",
                           table: "w-full border-collapse",
-                          head_row: "grid grid-cols-7 text-[11px] text-muted-foreground",
+                          head_row: "grid grid-cols-7 gap-1 text-[11px] text-muted-foreground sm:gap-2",
                           head_cell: "text-center font-medium",
-                          row: "grid grid-cols-7 gap-2",
-                          cell: "text-center text-sm",
-                          day: "h-9 w-9 rounded-lg text-sm text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary flex items-center justify-center",
+                          row: "grid grid-cols-7 gap-1 sm:gap-2",
+                          cell: "text-center text-xs sm:text-sm",
+                          day:
+                            "aspect-square w-full rounded-lg text-sm text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary flex items-center justify-center",
                           day_selected: "bg-primary text-primary-foreground hover:bg-primary",
                           day_today: "border border-primary/40",
                           day_disabled: "opacity-40 cursor-not-allowed",
