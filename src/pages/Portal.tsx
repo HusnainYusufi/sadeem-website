@@ -70,9 +70,6 @@ const statusBadge = (status: AvailabilityStatus) => {
   }
 };
 
-const ADMIN_USERNAME = "admin";
-const ADMIN_PASSWORD = "admin";
-
 const Portal = () => {
   const todayISO = useMemo(() => formatISO(new Date()), []);
   const { data: slots = [], isLoading: isAvailabilityLoading, refetch } = useAvailabilityQuery();
@@ -91,7 +88,7 @@ const Portal = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const upcoming = useMemo(() => slots.slice(0, 12), [slots]);
-  const isAuthenticated = Boolean(session);
+  const isAuthenticated = Boolean(session?.access_token);
 
   const applySession = async (nextSession: SupabaseSession) => {
     writeSession(nextSession);
@@ -105,14 +102,6 @@ const Portal = () => {
     event.preventDefault();
     try {
       setIsSubmitting(true);
-      const isAdminLogin =
-        credentials.email.trim().toLowerCase() === ADMIN_USERNAME && credentials.password === ADMIN_PASSWORD;
-
-      if (isAdminLogin) {
-        await applySession({ access_token: "", refresh_token: "admin", token_type: "bearer" });
-        return;
-      }
-
       const nextSession = await signInWithSupabase(credentials.email, credentials.password);
       await applySession(nextSession);
     } catch (error) {
@@ -215,11 +204,11 @@ const Portal = () => {
               <CardContent className="space-y-4">
                 <form className="space-y-4" onSubmit={handleLogin}>
                   <div className="space-y-2">
-                    <Label htmlFor="portal-email">Email or admin user</Label>
+                    <Label htmlFor="portal-email">Email</Label>
                     <Input
                       id="portal-email"
-                      type="text"
-                      placeholder="admin"
+                      type="email"
+                      placeholder="you@example.com"
                       value={credentials.email}
                       onChange={(event) => setCredentials({ ...credentials, email: event.target.value })}
                       required
@@ -241,7 +230,7 @@ const Portal = () => {
                     <LogIn className="h-4 w-4 mr-2" /> {isSubmitting ? "Signing in..." : "Sign in"}
                   </Button>
                   <p className="text-xs text-muted-foreground">
-                    Use your Supabase credentials or the admin/admin login to access the portal.
+                    Use your Supabase credentials to access the portal. Only authenticated users can change availability.
                   </p>
                 </form>
               </CardContent>

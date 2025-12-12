@@ -21,8 +21,8 @@ export type ContactQuery = {
   other_services?: string[];
 };
 
-const SUPABASE_URL = "https://hlkvuxnznpqoqndaprku.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhsa3Z1eG56bnBxb3FuZGFwcmt1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzODEzMTksImV4cCI6MjA4MDk1NzMxOX0.7BVI1VSKvNRVm6wHP-SefM4bltw9emXLE6U4lm9I3sI";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "";
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY ?? "";
 
 export const hasSupabaseConfig = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
@@ -148,9 +148,7 @@ export const fetchAvailabilityFromSupabase = async (
   daysAhead: number,
   accessToken?: string,
 ): Promise<AvailabilitySlot[]> => {
-  const localFallback = () => readLocalAvailability();
-
-  if (!hasSupabaseConfig) return localFallback();
+  if (!hasSupabaseConfig) return readLocalAvailability();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const futureDate = new Date(today);
@@ -162,29 +160,24 @@ export const fetchAvailabilityFromSupabase = async (
   query.searchParams.append("date", `gte.${today.toISOString().split("T")[0]}`);
   query.searchParams.append("date", `lte.${futureDate.toISOString().split("T")[0]}`);
 
-  try {
-    const response = await fetch(query.toString(), {
-      headers: {
-        ...headers(accessToken),
-        Prefer: "count=none",
-      },
-    });
+  const response = await fetch(query.toString(), {
+    headers: {
+      ...headers(accessToken),
+      Prefer: "count=none",
+    },
+  });
 
-    const data = await handleResponse(response);
-    const slots = (data as AvailabilitySlot[]).map((slot) => ({
-      ...slot,
-      note: slot.note ?? null,
-    }));
+  const data = await handleResponse(response);
+  const slots = (data as AvailabilitySlot[]).map((slot) => ({
+    ...slot,
+    note: slot.note ?? null,
+  }));
 
-    if (slots.length) {
-      writeLocalAvailability(slots);
-    }
-
-    return slots;
-  } catch (error) {
-    console.warn("Falling back to local availability", error);
-    return localFallback();
+  if (slots.length) {
+    writeLocalAvailability(slots);
   }
+
+  return slots;
 };
 
 export const upsertAvailabilityToSupabase = async (
@@ -201,31 +194,26 @@ export const upsertAvailabilityToSupabase = async (
     return saveLocally();
   }
 
-  try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/availability_slots?on_conflict=date`, {
-      method: "POST",
-      headers: {
-        ...headers(accessToken),
-        Prefer: "resolution=merge-duplicates",
-      },
-      body: JSON.stringify(
-        payload.map((slot) => ({
-          ...slot,
-          note: slot.note ?? null,
-        })),
-      ),
-    });
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/availability_slots?on_conflict=date`, {
+    method: "POST",
+    headers: {
+      ...headers(accessToken),
+      Prefer: "resolution=merge-duplicates",
+    },
+    body: JSON.stringify(
+      payload.map((slot) => ({
+        ...slot,
+        note: slot.note ?? null,
+      })),
+    ),
+  });
 
-    const data = await handleResponse(response);
-    const saved = data as AvailabilitySlot[];
-    if (saved?.length) {
-      writeLocalAvailability(mergeAvailabilitySlots(readLocalAvailability(), saved));
-    }
-    return saved;
-  } catch (error) {
-    console.warn("Unable to persist availability to Supabase, storing locally instead", error);
-    return saveLocally();
+  const data = await handleResponse(response);
+  const saved = data as AvailabilitySlot[];
+  if (saved?.length) {
+    writeLocalAvailability(mergeAvailabilitySlots(readLocalAvailability(), saved));
   }
+  return saved;
 };
 
 export const submitQueryToSupabase = async (payload: ContactQuery): Promise<ContactQuery> => {
@@ -244,32 +232,27 @@ export const submitQueryToSupabase = async (payload: ContactQuery): Promise<Cont
     return localFallback();
   }
 
-  try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/queries`, {
-      method: "POST",
-      headers: {
-        ...headers(),
-        Prefer: "return=representation",
-      },
-      body: JSON.stringify({
-        name: payload.name,
-        email: payload.email,
-        phone: payload.phone,
-        selected_package: payload.selected_package ?? null,
-        project_type: payload.project_type ?? null,
-        preferred_date: payload.preferred_date ?? null,
-        details: payload.details ?? null,
-        other_services: payload.other_services ?? [],
-      }),
-    });
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/queries`, {
+    method: "POST",
+    headers: {
+      ...headers(),
+      Prefer: "return=representation",
+    },
+    body: JSON.stringify({
+      name: payload.name,
+      email: payload.email,
+      phone: payload.phone,
+      selected_package: payload.selected_package ?? null,
+      project_type: payload.project_type ?? null,
+      preferred_date: payload.preferred_date ?? null,
+      details: payload.details ?? null,
+      other_services: payload.other_services ?? [],
+    }),
+  });
 
-    const data = await handleResponse(response);
-    const saved = (data as ContactQuery[])[0];
-    return saved ?? localFallback();
-  } catch (error) {
-    console.warn("Falling back to local query storage", error);
-    return localFallback();
-  }
+  const data = await handleResponse(response);
+  const saved = (data as ContactQuery[])[0];
+  return saved ?? localFallback();
 };
 
 export const fetchQueriesFromSupabase = async (accessToken?: string): Promise<ContactQuery[]> => {
@@ -277,23 +260,18 @@ export const fetchQueriesFromSupabase = async (accessToken?: string): Promise<Co
     return readLocalQueries();
   }
 
-  try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/queries?select=*&order=created_at.desc`, {
-      headers: headers(accessToken),
-    });
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/queries?select=*&order=created_at.desc`, {
+    headers: headers(accessToken),
+  });
 
-    const data = await handleResponse(response);
-    const results = (data as ContactQuery[]).map((entry) => ({
-      ...entry,
-      other_services: entry.other_services ?? [],
-    }));
-    if (!results.length) {
-      return readLocalQueries();
-    }
-    writeLocalQueries(results);
-    return results;
-  } catch (error) {
-    console.warn("Falling back to local queries", error);
+  const data = await handleResponse(response);
+  const results = (data as ContactQuery[]).map((entry) => ({
+    ...entry,
+    other_services: entry.other_services ?? [],
+  }));
+  if (!results.length) {
     return readLocalQueries();
   }
+  writeLocalQueries(results);
+  return results;
 };
