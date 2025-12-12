@@ -30,6 +30,12 @@ const statusCopy: Record<AvailabilityStatus, string> = {
   booked: "Locked",
 };
 
+const statusLabel: Record<AvailabilityStatus, string> = {
+  available: "Available",
+  hold: "On hold",
+  booked: "Booked",
+};
+
 const formatISO = (date: Date) => date.toISOString().split("T")[0];
 const formatDisplay = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
@@ -43,6 +49,10 @@ const Availability = () => {
   }, []);
 
   const [selectedDate, setSelectedDate] = useState<string>("");
+  const [currentMonth, setCurrentMonth] = useState<Date>(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
   const [statusFilter, setStatusFilter] = useState<AvailabilityStatus | "all">("all");
 
   useEffect(() => {
@@ -51,18 +61,21 @@ const Availability = () => {
     }
   }, [slots, selectedDate]);
 
+  useEffect(() => {
+    if (!selectedDate) return;
+    const date = new Date(selectedDate);
+    const firstOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+    if (firstOfMonth.getTime() !== currentMonth.getTime()) {
+      setCurrentMonth(firstOfMonth);
+    }
+  }, [currentMonth, selectedDate]);
+
   const scheduleMap = useMemo(() => new Map(slots.map((slot) => [slot.date, slot])), [slots]);
 
   const filteredSlots = useMemo(
     () => (statusFilter === "all" ? slots : slots.filter((slot) => slot.status === statusFilter)),
     [slots, statusFilter],
   );
-
-  const months = useMemo(() => {
-    const first = new Date(today.getFullYear(), today.getMonth(), 1);
-    const next = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-    return [first, next];
-  }, [today]);
 
   const getStatusForDate = (date: Date): { status: AvailabilityStatus | "past"; label?: string; note?: string | null } => {
     const iso = formatISO(date);
@@ -131,51 +144,31 @@ const Availability = () => {
     const month = monthDate.getMonth();
     const startDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-    const cells = Array.from({ length: startDay + daysInMonth }, (_, index) => {
-      if (index < startDay) return null;
-      const day = index - startDay + 1;
-      const date = new Date(year, month, day);
-      const iso = formatISO(date);
-      const { status, label, note } = getStatusForDate(date);
-
-      const filteredOut = statusFilter !== "all" && status !== statusFilter && status !== "past";
-
-      return (
-        <button
-          key={iso}
-          type="button"
-          onClick={() => setSelectedDate(iso)}
-          className={`group flex flex-col items-start justify-between rounded-xl border px-3 py-2 text-left transition shadow-sm hover:-translate-y-0.5 hover:shadow-soft ${
-            statusStyles[status]
-          } ${selectedDate === iso ? "ring-2 ring-offset-2 ring-primary" : ""} ${filteredOut ? "opacity-40" : ""}`}
-        >
-          <div className="flex items-center justify-between w-full">
-            <span className="text-xs uppercase tracking-[0.18em] text-foreground/60">{day}</span>
-            {status === "booked" && <CalendarX className="h-4 w-4" />}
-            {status === "hold" && <CalendarClock className="h-4 w-4" />}
-            {status === "available" && <CalendarCheck className="h-4 w-4" />}
-          </div>
-          <div className="mt-1 text-xs text-foreground/80 leading-snug line-clamp-2">
-            {status === "available" ? statusCopy.available : label}
-          </div>
-          {note && <p className="mt-1 text-[11px] text-foreground/60">{note}</p>}
-        </button>
-      );
-    });
+    const totalCells = Math.ceil((startDay + daysInMonth) / 7) * 7;
 
     return (
-      <div key={monthDate.toISOString()} className="rounded-3xl border border-border bg-background/80 p-4 shadow-soft space-y-3">
+      <div className="rounded-3xl border border-border bg-background/80 p-6 shadow-soft space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{monthDate.toLocaleString("default", { month: "long" })}</p>
-            <p className="text-lg font-semibold">{monthDate.getFullYear()}</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Month</p>
+            <p className="text-xl font-semibold">{monthDate.toLocaleString("default", { month: "long", year: "numeric" })}</p>
           </div>
-          <Badge variant="secondary" className="gap-2">
-            <CalendarDays className="h-4 w-4" />
-            Live board
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(new Date(year, month - 1, 1))}>
+              <span className="sr-only">Previous month</span>
+              ←
+            </Button>
+            <Badge variant="secondary" className="gap-2">
+              <CalendarDays className="h-4 w-4" />
+              Live board
+            </Badge>
+            <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(new Date(year, month + 1, 1))}>
+              <span className="sr-only">Next month</span>
+              →
+            </Button>
+          </div>
         </div>
+
         <div className="grid grid-cols-7 text-[11px] uppercase tracking-[0.2em] text-muted-foreground gap-2">
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
             <span key={day} className="text-center">
@@ -183,11 +176,51 @@ const Availability = () => {
             </span>
           ))}
         </div>
+
         <div className="grid grid-cols-7 gap-2">
-          {Array.from({ length: startDay }, (_, index) => (
-            <div key={`empty-${monthDate.toISOString()}-${index}`} className="h-20" />
-          ))}
-          {cells.filter(Boolean)}
+          {Array.from({ length: totalCells }, (_, index) => {
+            const day = index - startDay + 1;
+            if (index < startDay || day > daysInMonth) {
+              return <div key={`empty-${monthDate.toISOString()}-${index}`} className="h-16 rounded-xl border border-dashed" />;
+            }
+
+            const date = new Date(year, month, day);
+            const iso = formatISO(date);
+            const { status, label, note } = getStatusForDate(date);
+            const filteredOut = statusFilter !== "all" && status !== statusFilter && status !== "past";
+            const isSelected = selectedDate === iso;
+
+            return (
+              <button
+                key={iso}
+                type="button"
+                onClick={() => setSelectedDate(iso)}
+                className={`group flex h-20 flex-col justify-between rounded-xl border px-3 py-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                  statusStyles[status]
+                } ${isSelected ? "ring-2 ring-offset-2 ring-primary" : ""} ${filteredOut ? "opacity-40" : ""}`}
+              >
+                <div className="flex items-center justify-between text-xs font-semibold text-foreground/70">
+                  <span>{day}</span>
+                  <span
+                    className={`h-2.5 w-2.5 rounded-full border border-foreground/10 ${
+                      status === "booked"
+                        ? "bg-rose-500"
+                        : status === "hold"
+                          ? "bg-amber-500"
+                          : status === "available"
+                            ? "bg-emerald-500"
+                            : "bg-muted"
+                    }`}
+                  />
+                </div>
+                <div className="text-[11px] uppercase tracking-[0.18em] text-foreground/60">{statusLabel[status] ?? "Past"}</div>
+                <div className="text-xs text-foreground/90 leading-snug line-clamp-1">
+                  {status === "available" ? statusCopy.available : label}
+                </div>
+                {note && <p className="text-[11px] text-foreground/60 line-clamp-1">{note}</p>}
+              </button>
+            );
+          })}
         </div>
       </div>
     );
@@ -199,10 +232,10 @@ const Availability = () => {
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
           <div className="space-y-4 max-w-3xl">
             <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Studio calendar</p>
-            <h2 className="font-display text-3xl md:text-4xl leading-tight">Interactive booking board with live holds</h2>
+            <h2 className="font-display text-3xl md:text-4xl leading-tight">Simple, professional booking calendar</h2>
             <p className="text-muted-foreground text-lg max-w-2xl">
-              Track every hold, lock dates with clients, and export a clean list for your inbox. Filter by status or jump to the
-              next open day without losing the big-picture view.
+              Browse dates like a clean date picker. Each day carries a clear label for open, on hold, or fully booked so clients
+              can scan availability in seconds.
             </p>
             <div className="flex flex-wrap gap-3 text-sm items-center">
               <div className="flex gap-2">
@@ -242,14 +275,24 @@ const Availability = () => {
           </div>
         </div>
 
-        <div className="grid xl:grid-cols-[2fr,1fr] gap-8 items-start">
-          <div className="grid md:grid-cols-2 gap-6">
-            {isLoading ? (
-              Array.from({ length: 2 }).map((_, index) => <Skeleton key={`skeleton-${index}`} className="h-[440px] rounded-3xl" />)
-            ) : (
-              months.map((month) => renderMonth(month))
-            )}
-          </div>
+        <div className="grid xl:grid-cols-[1.6fr,1fr] gap-8 items-start">
+          <div className="space-y-4">
+            {isLoading ? <Skeleton className="h-[480px] rounded-3xl" /> : renderMonth(currentMonth)}
+              <div className="flex flex-wrap gap-3 text-sm">
+                {(["available", "hold", "booked"] as AvailabilityStatus[]).map((status) => (
+                  <Badge key={status} variant="outline" className={`gap-2 px-3 py-1 ${statusStyles[status]}`}>
+                    {status === "available" && <CalendarCheck className="h-4 w-4" />}
+                    {status === "hold" && <CalendarClock className="h-4 w-4" />}
+                    {status === "booked" && <CalendarX className="h-4 w-4" />}
+                    <span className="font-semibold capitalize">{statusLabel[status]}</span>
+                  </Badge>
+                ))}
+                <Badge variant="secondary" className="gap-2">
+                  <Info className="h-4 w-4" />
+                  Tap a date to see its note
+                </Badge>
+              </div>
+            </div>
 
           <div className="space-y-4">
             <Card className="p-6 space-y-4 border-primary/20 shadow-soft">
