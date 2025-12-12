@@ -173,9 +173,7 @@ export const fetchAvailabilityFromSupabase = async (
     note: slot.note ?? null,
   }));
 
-  if (slots.length) {
-    writeLocalAvailability(slots);
-  }
+  writeLocalAvailability(slots);
 
   return slots;
 };

@@ -33,7 +33,7 @@ export const AVAILABILITY_WINDOW_DAYS = 60;
 
 export const useAvailabilityQuery = () => {
   const session = readStoredSession();
-  const baseCalendar = buildAvailabilityWindow(AVAILABILITY_WINDOW_DAYS);
+  const baseCalendar = hasSupabaseConfig ? [] : buildAvailabilityWindow(AVAILABILITY_WINDOW_DAYS);
 
   const mergeWithBase = (overrides: AvailabilitySlot[]) => {
     if (!overrides.length) return baseCalendar;
@@ -58,7 +58,7 @@ export const useAvailabilityQuery = () => {
 
       try {
         const remote = await fetchAvailabilityFromSupabase(AVAILABILITY_WINDOW_DAYS, session?.access_token);
-        const merged = mergeWithBase(remote.length ? remote : localOverrides);
+        const merged = mergeWithBase(remote);
         writeLocalAvailability(merged);
         return merged;
       } catch (error) {
