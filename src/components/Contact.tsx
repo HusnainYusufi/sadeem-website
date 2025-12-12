@@ -1,8 +1,10 @@
 import type { ChangeEvent, FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
+import * as Popover from "@radix-ui/react-popover";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Phone, MapPin, Clock, MessageCircle, Send } from "lucide-react";
+import { DayPicker } from "react-day-picker";
+import { Calendar, ChevronDown, Clock, MapPin, MessageCircle, Phone, Send } from "lucide-react";
 import { packages } from "@/data/packages";
 import { submitQueryToSupabase } from "@/lib/supabase";
 import { useAvailabilityQuery } from "@/hooks/useAvailability";
@@ -18,21 +20,29 @@ const Contact = () => {
     details: "",
     otherServices: [] as string[],
   });
+  const [isDatePickerOpen, setDatePickerOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionMessage, setSubmissionMessage] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { data: availabilitySlots = [] } = useAvailabilityQuery();
-
-  const availabilityMap = useMemo(
-    () => new Map(availabilitySlots.map((slot) => [slot.date, slot])),
-    [availabilitySlots],
-  );
 
   const today = useMemo(() => {
     const base = new Date();
     base.setHours(0, 0, 0, 0);
     return base;
   }, []);
+
+  const selectedDate = formData.date ? new Date(formData.date) : undefined;
+
+  const bookedDates = useMemo(
+    () => availabilitySlots.filter((slot) => slot.status === "booked").map((slot) => new Date(slot.date)),
+    [availabilitySlots],
+  );
+
+  const holdDates = useMemo(
+    () => availabilitySlots.filter((slot) => slot.status === "hold").map((slot) => new Date(slot.date)),
+    [availabilitySlots],
+  );
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -56,13 +66,6 @@ const Contact = () => {
 
   const availableServices = ["Art Direction", "Lighting", "Generator"];
 
-  const statusColors: Record<string, string> = {
-    booked: "bg-rose-500 text-white border-rose-600",
-    hold: "bg-amber-400 text-amber-950 border-amber-500",
-    available: "bg-emerald-500 text-white border-emerald-500",
-    past: "bg-muted text-foreground/60 border-border",
-  };
-
   const formatDisplayDate = (iso?: string) =>
     iso
       ? new Date(iso).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })
@@ -76,20 +79,9 @@ const Contact = () => {
     [formData],
   );
 
-  const monthsToDisplay = useMemo(() => {
-    const start = new Date(today);
-    start.setDate(1);
-    return [start, new Date(start.getFullYear(), start.getMonth() + 1, 1)];
-  }, [today]);
-
-  const resolveStatusForDate = (date: Date) => {
-    if (date < today) return "past";
-    const iso = date.toISOString().split("T")[0];
-    return availabilityMap.get(iso)?.status ?? "available";
-  };
-
   const handleDateSelect = (iso: string) => {
     setFormData((prev) => ({ ...prev, date: iso }));
+    setDatePickerOpen(false);
   };
 
   const handleChange = (
@@ -331,73 +323,79 @@ const Contact = () => {
                     </span>
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {monthsToDisplay.map((month) => {
-                      const startDay = new Date(month.getFullYear(), month.getMonth(), 1).getDay();
-                      const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+                  <Popover.Root open={isDatePickerOpen} onOpenChange={setDatePickerOpen}>
+                    <Popover.Trigger asChild>
+                      <button
+                        type="button"
+                        className="flex w-full items-center justify-between rounded-lg border border-muted bg-background px-4 py-3 text-left text-sm text-foreground shadow-soft transition hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      >
+                        <span className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          {formData.date ? formatDisplayDate(formData.date) : "Select a date"}
+                        </span>
+                        <ChevronDown
+                          className={`h-4 w-4 text-muted-foreground transition ${isDatePickerOpen ? "rotate-180" : ""}`}
+                        />
+                      </button>
+                    </Popover.Trigger>
+                    <Popover.Content
+                      align="start"
+                      sideOffset={8}
+                      className="z-50 w-auto rounded-xl border border-muted bg-background p-4 shadow-elevated/30"
+                    >
+                      <DayPicker
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={(date) => {
+                          if (!date) return;
+                          handleDateSelect(date.toISOString().split("T")[0]);
+                        }}
+                        disabled={[{ before: today }, ...bookedDates]}
+                        modifiers={{ booked: bookedDates, hold: holdDates }}
+                        modifiersClassNames={{
+                          booked: "bg-rose-500 text-white hover:bg-rose-500 focus-visible:ring-rose-500",
+                          hold: "bg-amber-200 text-amber-950 hover:bg-amber-200",
+                        }}
+                        className="mx-auto"
+                        classNames={{
+                          months: "flex flex-col gap-4",
+                          month: "space-y-4",
+                          caption: "flex items-center justify-between px-2 text-sm font-semibold",
+                          caption_label: "text-sm font-semibold",
+                          nav: "flex items-center gap-2",
+                          nav_button:
+                            "h-8 w-8 inline-flex items-center justify-center rounded-md border border-muted bg-background hover:bg-muted text-muted-foreground transition",
+                          table: "w-full border-collapse",
+                          head_row: "grid grid-cols-7 text-[11px] text-muted-foreground",
+                          head_cell: "text-center font-medium",
+                          row: "grid grid-cols-7 gap-2",
+                          cell: "text-center text-sm",
+                          day: "h-9 w-9 rounded-lg text-sm text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary flex items-center justify-center",
+                          day_selected: "bg-primary text-primary-foreground hover:bg-primary",
+                          day_today: "border border-primary/40",
+                          day_disabled: "opacity-40 cursor-not-allowed",
+                          day_outside: "text-muted-foreground/50",
+                        }}
+                        components={{
+                          IconLeft: () => <ChevronDown className="h-4 w-4 rotate-90" />,
+                          IconRight: () => <ChevronDown className="h-4 w-4 -rotate-90" />,
+                        }}
+                      />
 
-                      return (
-                        <div key={`${month.getFullYear()}-${month.getMonth()}`} className="space-y-2">
-                          <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                            <span>{month.toLocaleString("default", { month: "long" })}</span>
-                            <span>{month.getFullYear()}</span>
-                          </div>
-                          <div className="grid grid-cols-7 text-[11px] text-muted-foreground/80 gap-2">
-                            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                              <span key={day} className="text-center">
-                                {day}
-                              </span>
-                            ))}
-                          </div>
-                          <div className="grid grid-cols-7 gap-2">
-                            {Array.from({ length: startDay }).map((_, index) => (
-                              <div key={`empty-${month.toISOString()}-${index}`} />
-                            ))}
-                            {Array.from({ length: daysInMonth }).map((_, index) => {
-                              const day = index + 1;
-                              const date = new Date(month.getFullYear(), month.getMonth(), day);
-                              const iso = date.toISOString().split("T")[0];
-                              const status = resolveStatusForDate(date);
-                              const isSelected = formData.date === iso;
-                              const label =
-                                status === "booked" ? "Booked" : status === "hold" ? "On hold" : status === "past" ? "Past" : "Open";
-
-                              return (
-                                <button
-                                  key={iso}
-                                  type="button"
-                                  onClick={() => handleDateSelect(iso)}
-                                  disabled={status === "past"}
-                                  className={`group flex flex-col items-center gap-1 rounded-lg border border-muted bg-white/70 px-2 py-1 text-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                                    isSelected ? "shadow-soft ring-2 ring-primary" : "hover:-translate-y-0.5"
-                                  } ${status === "past" ? "opacity-60" : ""}`}
-                                >
-                                  <span
-                                    className={`flex h-9 w-9 items-center justify-center rounded-full border text-sm font-semibold ${
-                                      statusColors[status] || statusColors.available
-                                    }`}
-                                  >
-                                    {day}
-                                  </span>
-                                  <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">{label}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                    {["available", "hold", "booked"].map((key) => (
-                      <span key={key} className="inline-flex items-center gap-2">
-                        <span className={`h-3 w-3 rounded-full border ${statusColors[key]}`} />
-                        <span className="uppercase tracking-[0.2em]">{key}</span>
-                      </span>
-                    ))}
-                    <span className="text-[11px] text-muted-foreground/80">Live view from the portal — booked dates stay red.</span>
-                  </div>
+                      <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                        <span className="inline-flex items-center gap-2">
+                          <span className="h-3 w-3 rounded-full bg-primary" /> Selected date
+                        </span>
+                        <span className="inline-flex items-center gap-2">
+                          <span className="h-3 w-3 rounded-full bg-amber-200 border border-amber-300" /> On hold
+                        </span>
+                        <span className="inline-flex items-center gap-2">
+                          <span className="h-3 w-3 rounded-full bg-rose-500" /> Booked (disabled)
+                        </span>
+                        <span className="text-[11px] text-muted-foreground/80">Live view from the portal — booked dates stay red.</span>
+                      </div>
+                    </Popover.Content>
+                  </Popover.Root>
 
                   <input type="hidden" name="date" value={formData.date} />
                 </div>
