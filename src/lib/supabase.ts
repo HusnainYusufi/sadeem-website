@@ -33,11 +33,19 @@ const headers = (accessToken?: string) => ({
 });
 
 const handleResponse = async (response: Response) => {
+  const rawText = await response.text();
+
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "Unable to reach Supabase");
+    throw new Error(rawText || "Unable to reach Supabase");
   }
-  return response.json();
+
+  if (!rawText) return null;
+
+  try {
+    return JSON.parse(rawText);
+  } catch (error) {
+    throw new Error((error as Error).message || "Unable to parse response");
+  }
 };
 
 export type SupabaseSession = {
@@ -207,7 +215,7 @@ export const upsertAvailabilityToSupabase = async (
   });
 
   const data = await handleResponse(response);
-  const saved = data as AvailabilitySlot[];
+  const saved = (data as AvailabilitySlot[]) ?? [];
   if (saved?.length) {
     writeLocalAvailability(mergeAvailabilitySlots(readLocalAvailability(), saved));
   }
