@@ -191,7 +191,7 @@ const Packages = () => {
   };
 
   const handleSendInquiry = () => {
-    const whatsappUrl = `https://wa.me/923000846656?text=${encodeURIComponent(whatsappMessage)}`;
+    const whatsappUrl = `https://wa.me/923104828282?text=${encodeURIComponent(whatsappMessage)}`;
     window.open(whatsappUrl, "_blank");
     setIsModalOpen(false);
   };

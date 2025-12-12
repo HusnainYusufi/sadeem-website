@@ -126,7 +126,7 @@ const Contact = () => {
 
       await queryClient.invalidateQueries({ queryKey: ["queries"] });
 
-      const whatsappUrl = `https://wa.me/923000846656?text=${encodeURIComponent(whatsappMessage)}`;
+      const whatsappUrl = `https://wa.me/923104828282?text=${encodeURIComponent(whatsappMessage)}`;
       window.open(whatsappUrl, "_blank");
 
       setSubmissionMessage("Submitted! Our team will review and reach out shortly.");
@@ -150,7 +150,7 @@ const Contact = () => {
   const handleQuickWhatsApp = () => {
     const quickMessage =
       "Hi Sunday Studio, I'm interested in a quote. Can we discuss the details?";
-    const whatsappUrl = `https://wa.me/923000846656?text=${encodeURIComponent(quickMessage)}`;
+    const whatsappUrl = `https://wa.me/923104828282?text=${encodeURIComponent(quickMessage)}`;
     window.open(whatsappUrl, "_blank");
   };
 
