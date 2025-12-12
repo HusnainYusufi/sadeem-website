@@ -31,6 +31,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Table,
@@ -40,9 +42,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 
 const formatISO = (date: Date) => date.toISOString().split("T")[0];
@@ -87,7 +89,10 @@ const Portal = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const upcoming = useMemo(() => slots.slice(0, 12), [slots]);
+  const upcoming = useMemo(
+    () => [...slots].sort((first, second) => first.date.localeCompare(second.date)),
+    [slots],
+  );
   const isAuthenticated = Boolean(session?.access_token);
 
   const applySession = async (nextSession: SupabaseSession) => {
@@ -237,7 +242,7 @@ const Portal = () => {
             </Card>
           ) : (
             <div className="space-y-6">
-              <div className="grid lg:grid-cols-3 gap-6 items-start">
+              <div className="grid lg:grid-cols-[320px,1fr] gap-6 items-start">
                 <Card className="border-primary/30 shadow-soft">
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
@@ -256,201 +261,222 @@ const Portal = () => {
                   </CardContent>
                 </Card>
 
-                <Card className="lg:col-span-2 shadow-soft">
-                  <CardHeader className="space-y-2">
-                    <CardTitle className="flex items-center gap-2">
-                      <MailOpen className="h-5 w-5" /> Latest client queries
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground">Entries submitted from the site contact form.</p>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {isQueriesLoading ? (
-                      <p className="text-sm text-muted-foreground">Loading queries...</p>
-                    ) : queries.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">No queries found yet.</p>
-                    ) : (
-                      <div className="overflow-x-auto">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Name</TableHead>
-                              <TableHead>Contact</TableHead>
-                              <TableHead>Package</TableHead>
-                              <TableHead>Project</TableHead>
-                              <TableHead>Date</TableHead>
-                              <TableHead>Notes</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {queries.map((item) => {
-                              const query = formatQueryRow(item);
-                              return (
-                                <TableRow key={query.id ?? `${query.email}-${query.preferred_date}`}>
-                                  <TableCell className="font-medium">{query.name}</TableCell>
-                                  <TableCell>
-                                    <div className="space-y-1 text-sm">
-                                      <p>{query.email}</p>
-                                      <p className="text-muted-foreground">{query.phone}</p>
-                                    </div>
-                                  </TableCell>
-                                  <TableCell>{query.selected_package}</TableCell>
-                                  <TableCell>{query.project_type}</TableCell>
-                                  <TableCell>{query.preferred_date}</TableCell>
-                                  <TableCell className="max-w-sm text-muted-foreground">
-                                    <p>{query.details || "—"}</p>
-                                    {query.other_services && query.other_services.length > 0 && (
-                                      <p className="text-xs">Services: {query.other_services.join(", ")}</p>
-                                    )}
-                                  </TableCell>
-                                </TableRow>
-                              );
-                            })}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                <Tabs defaultValue="queries" className="space-y-4">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="queries">Client queries</TabsTrigger>
+                    <TabsTrigger value="availability">Bookings & availability</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="queries">
+                    <Card className="shadow-soft">
+                      <CardHeader className="space-y-2">
+                        <CardTitle className="flex items-center gap-2">
+                          <MailOpen className="h-5 w-5" /> All client queries
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                          Every submission from the contact form. Scroll to see older requests.
+                        </p>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        {isQueriesLoading ? (
+                          <p className="text-sm text-muted-foreground">Loading queries...</p>
+                        ) : queries.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">No queries found yet.</p>
+                        ) : (
+                          <ScrollArea className="w-full max-h-[480px] rounded-lg border border-muted/60">
+                            <div className="min-w-[760px]">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Name</TableHead>
+                                    <TableHead>Contact</TableHead>
+                                    <TableHead>Package</TableHead>
+                                    <TableHead>Project</TableHead>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead>Notes</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {queries.map((item) => {
+                                    const query = formatQueryRow(item);
+                                    return (
+                                      <TableRow key={query.id ?? `${query.email}-${query.preferred_date}`}>
+                                        <TableCell className="font-medium">{query.name}</TableCell>
+                                        <TableCell>
+                                          <div className="space-y-1 text-sm">
+                                            <p>{query.email}</p>
+                                            <p className="text-muted-foreground">{query.phone}</p>
+                                          </div>
+                                        </TableCell>
+                                        <TableCell>{query.selected_package}</TableCell>
+                                        <TableCell>{query.project_type}</TableCell>
+                                        <TableCell>{query.preferred_date}</TableCell>
+                                        <TableCell className="max-w-sm text-muted-foreground">
+                                          <p>{query.details || "—"}</p>
+                                          {query.other_services && query.other_services.length > 0 && (
+                                            <p className="text-xs">Services: {query.other_services.join(", ")}</p>
+                                          )}
+                                        </TableCell>
+                                      </TableRow>
+                                    );
+                                  })}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          </ScrollArea>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+
+                  <TabsContent value="availability">
+                    <Card className="shadow-soft">
+                      <CardHeader className="space-y-2">
+                        <CardTitle className="flex items-center gap-2">
+                          <CalendarPlus className="h-5 w-5" /> Update availability
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                          Set a date to Available, Hold, or Booked. Labels and notes show up instantly on the public calendar.
+                        </p>
+                      </CardHeader>
+                      <CardContent>
+                        <form className="grid gap-4" onSubmit={handleSlotSubmit}>
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="slot-date">Date</Label>
+                              <Input
+                                id="slot-date"
+                                type="date"
+                                min={todayISO}
+                                value={formState.date}
+                                onChange={(event) => setFormState({ ...formState, date: event.target.value })}
+                                required
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="slot-status">Status</Label>
+                              <Select
+                                value={formState.status}
+                                onValueChange={(value) => setFormState({ ...formState, status: value as AvailabilityStatus })}
+                              >
+                                <SelectTrigger id="slot-status">
+                                  <SelectValue placeholder="Select a status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="available">Available</SelectItem>
+                                  <SelectItem value="hold">Hold</SelectItem>
+                                  <SelectItem value="booked">Booked</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="slot-label">Label</Label>
+                            <Input
+                              id="slot-label"
+                              placeholder="e.g. Fashion lookbook, Client Walkthrough"
+                              value={formState.label}
+                              onChange={(event) => setFormState({ ...formState, label: event.target.value })}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="slot-note">Note (optional)</Label>
+                            <Textarea
+                              id="slot-note"
+                              placeholder="Add timing preferences, PO status, or anything the client should know"
+                              value={formState.note}
+                              onChange={(event) => setFormState({ ...formState, note: event.target.value })}
+                              rows={3}
+                            />
+                          </div>
+
+                          <div className="flex flex-wrap gap-3 items-center">
+                            <Button type="submit" disabled={isSubmitting || !isAuthenticated}>
+                              {isSubmitting ? "Saving..." : "Save availability"}
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              onClick={() => setFormState({ ...formState, label: "", note: "" })}
+                            >
+                              Clear notes
+                            </Button>
+                            <p className="text-xs text-muted-foreground">Only authenticated users can save updates.</p>
+                          </div>
+                        </form>
+
+                        <Separator className="my-6" />
+
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Upcoming</p>
+                              <p className="font-semibold">Live availability feed</p>
+                            </div>
+                            <Badge variant="outline" className="gap-2">
+                              <CalendarDays className="h-4 w-4" />
+                              {isAvailabilityLoading ? "--" : `${upcoming.length} days`}
+                            </Badge>
+                          </div>
+                          <ScrollArea className="w-full max-h-[480px] rounded-lg border border-muted/60">
+                            <div className="min-w-[700px]">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Label</TableHead>
+                                    <TableHead>Notes</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {upcoming.map((slot) => (
+                                    <TableRow key={slot.date}>
+                                      <TableCell className="font-medium">{slot.date}</TableCell>
+                                      <TableCell>{statusBadge(slot.status)}</TableCell>
+                                      <TableCell>{slot.label || "—"}</TableCell>
+                                      <TableCell className="max-w-xs text-muted-foreground">{slot.note || ""}</TableCell>
+                                      <TableCell className="text-right">
+                                        <div className="flex gap-2 justify-end">
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => prefillFromSlot(slot.date)}
+                                            disabled={!isAuthenticated}
+                                          >
+                                            Edit
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() =>
+                                              setFormState({
+                                                date: slot.date,
+                                                status: "available",
+                                                label: "",
+                                                note: "",
+                                              })
+                                            }
+                                            disabled={!isAuthenticated}
+                                          >
+                                            Set open
+                                          </Button>
+                                        </div>
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          </ScrollArea>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                </Tabs>
               </div>
-
-              <Card className="shadow-soft">
-                <CardHeader className="space-y-2">
-                  <CardTitle className="flex items-center gap-2">
-                    <CalendarPlus className="h-5 w-5" /> Update availability
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Set a date to Available, Hold, or Booked. Labels and notes show up instantly on the public calendar.
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <form className="grid gap-4" onSubmit={handleSlotSubmit}>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="slot-date">Date</Label>
-                        <Input
-                          id="slot-date"
-                          type="date"
-                          min={todayISO}
-                          value={formState.date}
-                          onChange={(event) => setFormState({ ...formState, date: event.target.value })}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="slot-status">Status</Label>
-                        <Select
-                          value={formState.status}
-                          onValueChange={(value) => setFormState({ ...formState, status: value as AvailabilityStatus })}
-                        >
-                          <SelectTrigger id="slot-status">
-                            <SelectValue placeholder="Select a status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="available">Available</SelectItem>
-                            <SelectItem value="hold">Hold</SelectItem>
-                            <SelectItem value="booked">Booked</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="slot-label">Label</Label>
-                      <Input
-                        id="slot-label"
-                        placeholder="e.g. Fashion lookbook, Client Walkthrough"
-                        value={formState.label}
-                        onChange={(event) => setFormState({ ...formState, label: event.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="slot-note">Note (optional)</Label>
-                      <Textarea
-                        id="slot-note"
-                        placeholder="Add timing preferences, PO status, or anything the client should know"
-                        value={formState.note}
-                        onChange={(event) => setFormState({ ...formState, note: event.target.value })}
-                        rows={3}
-                      />
-                    </div>
-
-                    <div className="flex flex-wrap gap-3 items-center">
-                      <Button type="submit" disabled={isSubmitting || !isAuthenticated}>
-                        {isSubmitting ? "Saving..." : "Save availability"}
-                      </Button>
-                      <Button type="button" variant="secondary" onClick={() => setFormState({ ...formState, label: "", note: "" })}>
-                        Clear notes
-                      </Button>
-                      <p className="text-xs text-muted-foreground">Only authenticated users can save updates.</p>
-                    </div>
-                  </form>
-
-                  <Separator className="my-6" />
-
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Upcoming</p>
-                        <p className="font-semibold">Live availability feed</p>
-                      </div>
-                      <Badge variant="outline" className="gap-2">
-                        <CalendarDays className="h-4 w-4" />
-                        {isAvailabilityLoading ? "--" : `${upcoming.length} days`}
-                      </Badge>
-                    </div>
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Label</TableHead>
-                            <TableHead>Notes</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {upcoming.map((slot) => (
-                            <TableRow key={slot.date}>
-                              <TableCell className="font-medium">{slot.date}</TableCell>
-                              <TableCell>{statusBadge(slot.status)}</TableCell>
-                              <TableCell>{slot.label || "—"}</TableCell>
-                              <TableCell className="max-w-xs text-muted-foreground">{slot.note || ""}</TableCell>
-                              <TableCell className="text-right">
-                                <div className="flex gap-2 justify-end">
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => prefillFromSlot(slot.date)}
-                                    disabled={!isAuthenticated}
-                                  >
-                                    Edit
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() =>
-                                      setFormState({
-                                        date: slot.date,
-                                        status: "available",
-                                        label: "",
-                                        note: "",
-                                      })
-                                    }
-                                    disabled={!isAuthenticated}
-                                  >
-                                    Set open
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           )}
         </div>
