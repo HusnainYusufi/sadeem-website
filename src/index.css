@@ -260,6 +260,7 @@
   mix-blend-mode: normal;
   pointer-events: none;
   z-index: 10000;
+  will-change: transform, opacity;
 }
 
 .custom-cursor-layer {
