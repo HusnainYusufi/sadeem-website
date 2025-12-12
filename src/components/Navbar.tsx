@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import logoDark from "@/assets/sunday-logo-black.svg";
-import logoLight from "@/assets/sunday-logo-white.svg";
 
 const navLinks = [
   { name: "Studio", href: "/#studio" },
@@ -41,13 +40,8 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-20">
           <a href="#" className="flex-shrink-0">
             <picture>
-              <source srcSet={isScrolled ? logoDark : logoLight} media="(min-width: 768px)" />
-              <img
-                src={isScrolled ? logoDark : logoLight}
-                alt="Sunday Studio logo"
-                className="h-10 w-auto drop-shadow-sm"
-                loading="lazy"
-              />
+              <source srcSet={logoDark} media="(min-width: 768px)" />
+              <img src={logoDark} alt="Sunday Studio logo" className="h-10 w-auto drop-shadow-sm" loading="lazy" />
             </picture>
           </a>
 
