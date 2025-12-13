@@ -4,10 +4,10 @@ import {
   AvailabilityStatus,
   fetchAvailabilityFromSupabase,
   hasSupabaseConfig,
+  purgeSupabaseCache,
   readLocalAvailability,
   readStoredSession,
   upsertAvailabilityToSupabase,
-  writeLocalAvailability,
 } from "@/lib/supabase";
 
 const formatISO = (date: Date) => date.toISOString().split("T")[0];
@@ -35,6 +35,8 @@ export const useAvailabilityQuery = () => {
   const session = readStoredSession();
   const baseCalendar = hasSupabaseConfig ? [] : buildAvailabilityWindow(AVAILABILITY_WINDOW_DAYS);
 
+  purgeSupabaseCache();
+
   const mergeWithBase = (overrides: AvailabilitySlot[]) => {
     if (!overrides.length) return baseCalendar;
 
@@ -49,24 +51,21 @@ export const useAvailabilityQuery = () => {
   return useQuery<AvailabilitySlot[]>({
     queryKey: ["availability"],
     queryFn: async () => {
-      const localOverrides = readLocalAvailability();
-      const mergedLocal = mergeWithBase(localOverrides);
-
       if (!hasSupabaseConfig) {
-        return mergedLocal;
+        const localOverrides = readLocalAvailability();
+        return mergeWithBase(localOverrides);
       }
 
       try {
         const remote = await fetchAvailabilityFromSupabase(AVAILABILITY_WINDOW_DAYS, session?.access_token);
         const merged = mergeWithBase(remote);
-        writeLocalAvailability(merged);
         return merged;
       } catch (error) {
-        console.warn("Falling back to cached availability", error);
-        return mergedLocal;
+        console.error("Unable to fetch availability from Supabase", error);
+        return baseCalendar;
       }
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0,
   });
 };
 
