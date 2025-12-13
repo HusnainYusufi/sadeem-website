@@ -60,6 +60,16 @@ const SESSION_STORAGE_KEY = "sunday-studio-session";
 const QUERIES_STORAGE_KEY = "sunday-studio-queries";
 const AVAILABILITY_STORAGE_KEY = "sunday-studio-availability";
 
+export const purgeSupabaseCache = () => {
+  if (!hasSupabaseConfig) return;
+  try {
+    localStorage.removeItem(QUERIES_STORAGE_KEY);
+    localStorage.removeItem(AVAILABILITY_STORAGE_KEY);
+  } catch (error) {
+    console.error("Unable to purge Supabase cache", error);
+  }
+};
+
 export const readStoredSession = (): SupabaseSession | null => {
   try {
     const raw = localStorage.getItem(SESSION_STORAGE_KEY);
@@ -181,8 +191,6 @@ export const fetchAvailabilityFromSupabase = async (
     note: slot.note ?? null,
   }));
 
-  writeLocalAvailability(slots);
-
   return slots;
 };
 
@@ -216,9 +224,6 @@ export const upsertAvailabilityToSupabase = async (
 
   const data = await handleResponse(response);
   const saved = (data as AvailabilitySlot[]) ?? [];
-  if (saved?.length) {
-    writeLocalAvailability(mergeAvailabilitySlots(readLocalAvailability(), saved));
-  }
   return saved;
 };
 
@@ -275,9 +280,6 @@ export const fetchQueriesFromSupabase = async (accessToken?: string): Promise<Co
     ...entry,
     other_services: entry.other_services ?? [],
   }));
-  if (!results.length) {
-    return readLocalQueries();
-  }
-  writeLocalQueries(results);
+
   return results;
 };

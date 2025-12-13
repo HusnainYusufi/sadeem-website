@@ -6,10 +6,10 @@ import logoDark from "@/assets/sunday-logo-black.svg";
 const navLinks = [
   { name: "Studio", href: "/#studio" },
   { name: "Packages", href: "/#packages" },
+  { name: "Gallery", href: "/gallery" },
   { name: "Services", href: "/#services" },
   { name: "Other Services", href: "/services" },
   { name: "Contact", href: "/#contact" },
-  { name: "Gallery Page", href: "/gallery" },
 ];
 
 const Navbar = () => {
