@@ -1,11 +1,21 @@
 import { motion } from "framer-motion";
 import { ArrowDown, MessageCircle } from "lucide-react";
+import heroVideo from "@/assets/1.mp4";
 
 const Hero = () => {
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center gradient-hero overflow-hidden">
-      {/* Background decorative elements */}
+      {/* Background video */}
       <div className="absolute inset-0 overflow-hidden">
+        <video
+          className="absolute inset-0 h-full w-full object-cover"
+          src={heroVideo}
+          autoPlay
+          muted
+          loop
+          playsInline
+        />
+        <div className="absolute inset-0 bg-background/60" />
         <div className="absolute top-20 left-10 w-72 h-72 bg-accent/30 rounded-full blur-3xl" />
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-muted/40 rounded-full blur-3xl" />
       </div>

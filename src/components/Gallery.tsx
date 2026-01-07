@@ -2,17 +2,18 @@ import type React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Minus, Plus, X, ZoomIn } from "lucide-react";
-import studioMain from "@/assets/studio-main.jpg";
-import studioDiagram from "@/assets/studio-diagram.png";
+import studioImageOne from "@/assets/1.jpg";
+import studioImageTwo from "@/assets/2.jpg";
+import studioImageThree from "@/assets/3.jpg";
 import logoDark from "@/assets/sunday-logo-black.svg";
 
 const galleryImages = [
-  { src: studioMain, alt: "Sunday Studio Main Space", category: "Studio" },
-  { src: studioDiagram, alt: "Studio Floor Plan", category: "Layout" },
-  { src: studioMain, alt: "Infinity Wall Setup", category: "Studio" },
-  { src: studioDiagram, alt: "Equipment Layout", category: "Layout" },
-  { src: studioMain, alt: "Lighting Setup", category: "Studio" },
-  { src: studioDiagram, alt: "Space Overview", category: "Layout" },
+  { src: studioImageOne, alt: "Sunday Studio Main Space", category: "Studio" },
+  { src: studioImageTwo, alt: "Studio Floor Plan", category: "Layout" },
+  { src: studioImageThree, alt: "Infinity Wall Setup", category: "Studio" },
+  { src: studioImageOne, alt: "Equipment Layout", category: "Layout" },
+  { src: studioImageTwo, alt: "Lighting Setup", category: "Studio" },
+  { src: studioImageThree, alt: "Space Overview", category: "Layout" },
 ];
 
 const Gallery = () => {
