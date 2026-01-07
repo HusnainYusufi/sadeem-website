@@ -5,47 +5,48 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Download, Maximize2, X } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import studioMain from "@/assets/studio-main.jpg";
-import studioDiagram from "@/assets/studio-diagram.png";
+import studioImageOne from "@/assets/1.jpg";
+import studioImageTwo from "@/assets/2.jpg";
+import studioImageThree from "@/assets/3.jpg";
 
 const galleryItems = [
   {
-    src: studioMain,
+    src: studioImageOne,
     alt: "Infinity wall in cinematic lighting",
     category: "Studio",
     mood: "Cinematic",
     accent: "#f4c95d",
   },
   {
-    src: studioDiagram,
+    src: studioImageTwo,
     alt: "Studio floor plan with equipment zones",
     category: "Layout",
     mood: "Blueprint",
     accent: "#9dd7ff",
   },
   {
-    src: studioMain,
+    src: studioImageThree,
     alt: "Editorial portrait setup on seamless stage",
     category: "Portrait",
     mood: "Editorial",
     accent: "#eac4ff",
   },
   {
-    src: studioDiagram,
+    src: studioImageOne,
     alt: "Lighting grid and rigging schematic",
     category: "Technical",
     mood: "Precision",
     accent: "#b6f3c5",
   },
   {
-    src: studioMain,
+    src: studioImageTwo,
     alt: "Fashion lookbook shot in studio",
     category: "Fashion",
     mood: "Runway",
     accent: "#ffdfb6",
   },
   {
-    src: studioDiagram,
+    src: studioImageThree,
     alt: "Overhead layout for large productions",
     category: "Layout",
     mood: "Spatial",

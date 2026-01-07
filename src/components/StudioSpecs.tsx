@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
-import studioMain from "@/assets/studio-main.jpg";
-import studioDiagram from "@/assets/studio-diagram.png";
+import studioImageOne from "@/assets/1.jpg";
+import studioImageTwo from "@/assets/2.jpg";
 
 const specs = [
   { label: "Total Seamless Length", value: "105 ft", metric: "≈ 32 m" },
@@ -37,7 +37,7 @@ const StudioSpecs = () => {
             className="relative"
           >
             <img
-              src={studioMain}
+              src={studioImageOne}
               alt="Sunday Studio Infinity Wall"
               className="w-full h-auto rounded-lg shadow-elevated"
             />
@@ -83,8 +83,8 @@ const StudioSpecs = () => {
           className="flex justify-center"
         >
           <img
-            src={studioDiagram}
-            alt="Studio Dimensions Diagram"
+            src={studioImageTwo}
+            alt="Studio Dimensions"
             className="max-w-full md:max-w-2xl rounded-lg shadow-medium"
           />
         </motion.div>
